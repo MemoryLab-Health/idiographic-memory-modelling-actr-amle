@@ -74,11 +74,12 @@ Run everything end to end with `make all`.
 
 Everything lands in a single [`output/`](./output) folder. Each notebook renders to a GitHub-viewable `.md` (with its `<name>_files/` figure folder alongside), and the named paper figures are also written there as PNGs via `ggsave()`.
 
-Rendered analysis notebook:
+Rendered analysis notebooks (one `.md` per script):
 
-- Example application: [model fitting](./output/05_fit_model.md)
+- Simulation: [01 simulate data](./output/01_simulate_data.md) · [02 greedy parameter selection](./output/02_greedy_parameter_selection.md) · [03 parameter recovery](./output/03_parameter_recovery.md)
+- Example application: [05 model fitting](./output/05_fit_model.md) · [06 classification](./output/06_classification.md)
 
-`make clean` removes the rendered notebooks and figure folders; `make` regenerates them.
+Only `05_fit_model.md` is shipped pre-rendered; the others appear once you run `make`. `make clean` removes the rendered notebooks and figure folders; `make` regenerates them.
 
 ## Data availability
 

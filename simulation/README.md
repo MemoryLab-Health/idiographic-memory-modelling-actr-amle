@@ -23,3 +23,11 @@ Individual steps: `make sim-data`, `make sim-greedy`, `make sim-recovery`.
 
 The expensive fits in scripts 02 and 03 are cached in [`../data/processed/fits/`](../data/processed/fits); the corresponding chunks are `eval = FALSE` and read those caches so the notebooks run quickly.
 Each script renders to a GitHub-viewable `.md` in the shared [`../output/`](../output) folder, alongside its figure folder and the named PNG figures.
+
+## Rendered notebooks
+
+- [01_simulate_data.md](../output/01_simulate_data.md)
+- [02_greedy_parameter_selection.md](../output/02_greedy_parameter_selection.md)
+- [03_parameter_recovery.md](../output/03_parameter_recovery.md)
+
+(These appear once you run `make simulation`.)

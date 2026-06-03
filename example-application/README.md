@@ -12,9 +12,12 @@ Hake et al. showed that clinical status could be recovered from the Speed of For
 5. [`05_fit_model.Rmd`](./scripts/05_fit_model.Rmd) — fit the AMLE model per session, producing `data/processed/AMLE_fit.csv` and the model-fit and parameter figures.
 6. [`06_classification.Rmd`](./scripts/06_classification.Rmd) — greedy forward parameter selection by bootstrap-corrected AUC for MCI vs HC classification.
 
-## Analysis notebook
+## Analysis notebooks
 
-- [Model fitting](../output/05_fit_model.md)
+- [05 Model fitting](../output/05_fit_model.md)
+- [06 Classification](../output/06_classification.md)
+
+(Script 04 is a plain R data-prep script, so it has no rendered notebook. Notebook 06 appears once you run `make classify`.)
 
 ## Running
 
