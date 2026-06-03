@@ -169,6 +169,9 @@ distr <- ggplot(param_long, aes(x = value, fill = parameter)) +
     strip.text       = element_text(size = 8, margin = margin(3, 3, 3, 3)),
     plot.margin      = margin(10, 20, 10, 20)
   ) +
+  scale_x_continuous(
+    breaks = scales::pretty_breaks(n = 4)
+  ) +
   scale_fill_aaas()
 
 # ── Plot B: accuracy ──────────────────────────────────────────────────────────
@@ -184,6 +187,9 @@ acc <- ggplot(learner_summary, aes(x = param_value, y = accuracy, color = parame
     strip.background = element_blank(),
     strip.text       = element_blank(),
     plot.margin      = margin(10, 20, 10, 20)
+  ) + 
+  scale_x_continuous(
+    breaks = scales::pretty_breaks(n = 4)
   ) +
   scale_color_aaas()
 
@@ -200,6 +206,9 @@ rt_plot <- ggplot(learner_summary, aes(x = param_value, y = med_rt, color = para
     strip.background = element_blank(),
     strip.text       = element_blank(),
     plot.margin      = margin(10, 20, 10, 20)
+  ) + 
+  scale_x_continuous(
+    breaks = scales::pretty_breaks(n = 4)
   ) +
   scale_color_aaas()
 
@@ -216,7 +225,7 @@ distr / acc / rt_plot +
     ## `geom_smooth()` using formula = 'y ~ x'
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 ``` r
 # Paper Figure 2: parameter distributions and their relation to behaviour
@@ -310,7 +319,7 @@ p_sigmoid <- ggplot() +
 p_calib + p_sigmoid
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 The left panel is a calibration plot: if the simulation is internally
 consistent, the binned points should fall close to the diagonal. The
@@ -348,7 +357,7 @@ p_rt_rep <- ggplot(learn_curve, aes(x = rep, y = median_rt)) +
 p_acc_rep + p_rt_rep
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 Accuracy should increase and RT should decrease over repetitions,
 reflecting the strengthening of memory traces through practice. The IQR
@@ -380,7 +389,7 @@ p_da_acc + p_da_rt
     ## `geom_smooth()` using formula = 'y ~ x'
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 Higher fact offsets (Δα) make a fact harder to retain, so accuracy
 should decrease and RT should increase with larger offsets. Each dot is
@@ -402,7 +411,7 @@ ggplot(sim_test, aes(x = rt, fill = correct)) +
   theme(legend.position = c(0.85, 0.85))
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 Correct responses should be faster than incorrect ones, consistent with
 the model’s assumption that higher activation produces both faster and

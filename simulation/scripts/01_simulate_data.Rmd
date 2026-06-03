@@ -145,6 +145,9 @@ distr <- ggplot(param_long, aes(x = value, fill = parameter)) +
     strip.text       = element_text(size = 8, margin = margin(3, 3, 3, 3)),
     plot.margin      = margin(10, 20, 10, 20)
   ) +
+  scale_x_continuous(
+    breaks = scales::pretty_breaks(n = 4)
+  ) +
   scale_fill_aaas()
 
 # ── Plot B: accuracy ──────────────────────────────────────────────────────────
@@ -160,6 +163,9 @@ acc <- ggplot(learner_summary, aes(x = param_value, y = accuracy, color = parame
     strip.background = element_blank(),
     strip.text       = element_blank(),
     plot.margin      = margin(10, 20, 10, 20)
+  ) + 
+  scale_x_continuous(
+    breaks = scales::pretty_breaks(n = 4)
   ) +
   scale_color_aaas()
 
@@ -176,6 +182,9 @@ rt_plot <- ggplot(learner_summary, aes(x = param_value, y = med_rt, color = para
     strip.background = element_blank(),
     strip.text       = element_blank(),
     plot.margin      = margin(10, 20, 10, 20)
+  ) + 
+  scale_x_continuous(
+    breaks = scales::pretty_breaks(n = 4)
   ) +
   scale_color_aaas()
 
