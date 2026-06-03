@@ -1,0 +1,7 @@
+# This directory holds the raw, undistributed source data.
+#
+# Required file:
+#   hake2024.Rdata   — raw retrieval-practice data from Hake et al. (2024)
+#
+# This file is NOT included in the repository (see .gitignore). Place it here
+# before running `make data`. The processed CSV it produces is in data/processed/.
