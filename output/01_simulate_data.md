@@ -1,7 +1,7 @@
 Simulation: generating synthetic retrieval-practice data
 ================
 Thomas Wilschut
-Last updated: 2026-06-03
+Last updated: 2026-06-12
 
 - [Setup](#setup)
 - [Simulate data](#simulate-data)

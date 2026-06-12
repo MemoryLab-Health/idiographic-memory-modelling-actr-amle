@@ -250,7 +250,7 @@ plot_cor <- function(df, x_var, x_lab, highlight_x = NULL) {
     scales_shared +
     plottheme +
     theme(legend.position = "none") +
-    labs(x = x_lab, y = "Recovery (correlation r)")
+    labs(x = x_lab, y = "Recovery (Preason's r)")
 }
 
 plot_error <- function(df, x_var, x_lab, highlight_x = NULL) {
@@ -309,17 +309,26 @@ pairs_plot <- ggpairs(
 # ── Combined figure ───────────────────────────────────────────────────────────
 pairs_grob <- GGally::ggmatrix_gtable(pairs_plot)
 
+
+p_corr_reps <- p_corr_reps + theme(legend.position = "none")
+p_error_reps <- p_error_reps + theme(legend.position = "none")
+p_corr_facts <- p_corr_facts + theme(legend.position = "none")
+p_error_facts <- p_error_facts + theme(legend.position = "bottom", # remeove legend title:
+                                       legend.title = element_blank()
+                                       )
+
 combined <-
-  (p_recovery) /
   ((p_corr_reps + p_error_reps) / (p_corr_facts + p_error_facts) |
      wrap_elements(pairs_grob)) +
-  plot_layout(heights = c(0.8, 2), widths = c(1.8, 1)) +
+  plot_layout(widths = c(1, 1)) +
   plot_annotation(tag_levels = "A") &
   theme(plot.tag = element_text(face = "bold", size = 14))
 
 combined
+
+
 # Paper Figure 5: recovery of participant-level parameters as a function of available data
-ggsave(here::here("output", "recovery_combined.png"), combined, width = 11, height = 9)
+ggsave(here::here("output", "recovery_combined.png"), combined, width = 11, height = 6.5)
 ```
 
 
@@ -372,7 +381,7 @@ p_fact_corr <- ggplot(fact_corr, aes(x = factor(n_repetitions), y = corr, group 
   geom_line(linewidth = 1, color = pal_aaas()(1)) +
   geom_point(size = 2, color = pal_aaas()(1)) +
   scale_y_continuous(limits = c(0, 1)) +
-  labs(x = "Repetitions per fact", y = "Recovery (correlation r)") +
+  labs(x = "Repetitions per fact", y = "Recovery (Preason's r)") +
   plottheme 
 
 # (C) Error over reps
@@ -399,6 +408,30 @@ p_fact_error <- ggplot(fact_error, aes(x = factor(n_repetitions), y = mean_error
 ggsave(here::here("output", "fact_level_recovery.png"), width = 10, height = 3.5)
 ```
 
+# Correlations of the true parameters
+
+
+```{r}
+true_param_pairs <- sim_test[, .(true_alpha, true_tau, true_s, true_lf, true_ter)]
+pairs_true <- ggpairs(
+  as.data.frame(true_param_pairs),
+  upper = list(continuous = function(data, mapping, ...) {
+    ggally_cor(data, mapping, ...)
+  }),
+  lower = list(continuous = function(data, mapping, ...) {
+    ggplot(data, mapping) +
+      geom_point(alpha = 0.3) +
+      geom_smooth(method = "lm", se = TRUE, color = "black")
+  }),
+  columnLabels = c("Speed of\nForgetting", "Retrieval\nthreshold",
+                 "Activation\nnoise", "Latency\nfactor", "Non-retrieval\ntime")
+) +
+  plottheme +
+  theme(strip.background = element_rect(fill = "grey85", colour = "grey60"),
+        strip.text       = element_text(size = 8),
+        axis.text.x      = element_text(angle = 90, hjust = 1))
+pairs_true
+```
 # Session info
 ```{r}
 sessionInfo()

@@ -1,7 +1,7 @@
 Example application: parameter contributions to MCI vs HC classification
 ================
 Thomas Wilschut
-Last updated: 2026-06-03
+Last updated: 2026-06-12
 
 - [Setup and helpers](#setup-and-helpers)
   - [Helpers](#helpers)
@@ -287,7 +287,7 @@ p_auc <- ggplot() +
   geom_segment(
     data = seg_data[!is.na(y_from)],
     aes(x = step - 1, xend = step, y = y_from, yend = auc_corrected,
-        color = param_label),
+        color = 'black'),
     linewidth = 0.4, linetype = "dashed", alpha = 0.7
   ) +
   geom_line(data = selection_path,
@@ -307,13 +307,12 @@ p_auc <- ggplot() +
     aes(x = step + 0.15, y = 0.62,
         label = paste0(param_label, " (",
                        scales::percent(auc_corrected, accuracy = 1), ")"),
-        color = param_label),
+        color = 'black'),
     size = 4, hjust = 0, show.legend = FALSE
   ) +
   scale_color_manual(name = "Parameter", values = param_cols) +
   scale_x_continuous(breaks = 1:5) +
   scale_y_continuous(limits = c(0.6, 1),
-                     labels = scales::percent_format(accuracy = 1),
                      breaks = seq(0.6, 1, by = 0.05),
                      oob = scales::squish) +
   labs(x = "Step (parameter added)",
@@ -324,7 +323,7 @@ p_auc <- ggplot() +
 p_auc
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/06_classification_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/06_classification_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ## Single-session AUC from person-average selection path
 
@@ -554,13 +553,12 @@ p_auc_single <- ggplot() +
     aes(x = step + 0.15, y = y_pos,
         label = paste0(param_label, " (",
                        scales::percent(auc_corrected, accuracy = 1), ")"),
-        color = param_label),
+        color = 'black'),
     size = 4, hjust = 0, show.legend = FALSE
   ) +
   scale_color_manual(name = "Parameter", values = param_cols) +
   scale_x_continuous(breaks = 1:5) +
   scale_y_continuous(limits = c(0.6, 1),
-                     labels = scales::percent_format(accuracy = 1),
                      breaks = seq(0.6, 1, by = 0.05),
                      oob = scales::squish) +
   labs(x = "Step (parameter added)",
@@ -568,20 +566,24 @@ p_auc_single <- ggplot() +
   theme_bw(base_size = 12) +
   theme(legend.position = "right", panel.grid.minor = element_blank())
 
+# change paramter order for the legend:
+p_auc_single <- p_auc_single +
+  scale_color_manual(name = "Parameter", values = param_cols,
+                     breaks = names(param_cols))
 # ── Combine panels ───────────────────────────────────────────────────────────
 p_combined <- (p_auc + ggtitle("Participant average")) +
   (p_auc_single + ggtitle("Single session")) +
-  plot_annotation(tag_levels = "A")
+  plot_annotation(tag_levels = "A") & theme(plot.tag = element_text(size = 14, face = "bold"))
 
 p_combined
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/06_classification_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/06_classification_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 # Paper Figure 10: greedy parameter selection by bootstrap-corrected AUC (A: participant average, B: single session)
 ggsave(here::here("output", "greedy_selection_auc_combined.png"), p_combined,
-       width = 12, height = 6, dpi = 300)
+       width = 11, height = 6, dpi = 300)
 ```
 
 ## Summary statistics for paper

@@ -1,7 +1,7 @@
 Example application: Modelling memory function in MCI and healthy ageing
 ================
 Maarten van der Velde & Thomas Wilschut
-Last updated: 2026-06-03
+Last updated: 2026-06-12
 
 - [Overview](#overview)
 - [Setup](#setup)
@@ -57,7 +57,7 @@ latency factor ($F$) and non-retrieval time ($t_{er}$)).
 library(here)
 ```
 
-    ## here() starts at /Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle
+    ## here() starts at /Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle
 
 ``` r
 library(data.table)
@@ -270,7 +270,7 @@ ggpairs(session_stats,
   scale_fill_manual(values = c(col_blue, col_red))
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/session-stats-correlation-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/session-stats-correlation-1.png)<!-- -->
 
 # Filter data
 
@@ -362,7 +362,7 @@ ggpairs(session_stats,
   scale_fill_manual(values = c(col_blue, col_red))
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/session-stats-filtered-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/session-stats-filtered-1.png)<!-- -->
 
 # Fit model
 
@@ -538,7 +538,7 @@ ggsave(here("output", "predicted_vs_observed_rt.png"), plot = p_decile_rt, width
 p_decile_rt
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/decile-plots-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/decile-plots-1.png)<!-- -->
 
 ### Correlation between predicted and observed RT
 
@@ -565,7 +565,7 @@ ggsave(here("output", "predicted_vs_observed_rt_correlation_dist.png"), plot = p
 p_rt_corr
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/correlation-rt-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/correlation-rt-1.png)<!-- -->
 
 Combined version of these RT fit plots:
 
@@ -576,7 +576,7 @@ p_rt_corr + p_decile_rt  +
   theme(plot.tag = element_text(face = "bold", size = 14))
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/rt-fit-plots-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/rt-fit-plots-1.png)<!-- -->
 
 ``` r
 # Paper Figure 8: RT model fit, panels A (correlation distribution) + B (decile plots) combined
@@ -614,7 +614,7 @@ ggplot(d_preds_both, aes(x = rt, fill = clinical_status)) +
     ## Warning: Removed 13 rows containing non-finite outside the scale range
     ## (`stat_density()`).
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/rt-distribution-full-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/rt-distribution-full-1.png)<!-- -->
 
 ``` r
 # Paper Figure 7: predicted vs observed RT density per participant (negative RTs = incorrect)
@@ -652,7 +652,7 @@ ggplot(fit_amle_long, aes(x = session_aligned, y = value, colour = clinical_stat
   theme(legend.position = "bottom")
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-over-time-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-over-time-1.png)<!-- -->
 
 ### Relationship to session properties
 
@@ -672,7 +672,7 @@ ggplot(fit_amle_long, aes(x = session_trials, y = value)) +
 
     ## `geom_smooth()` using formula = 'y ~ s(x, bs = "cs")'
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-1.png)<!-- -->
 
 ``` r
 ggplot(fit_amle_long, aes(x = facts, y = value)) +
@@ -684,7 +684,7 @@ ggplot(fit_amle_long, aes(x = facts, y = value)) +
 
     ## `geom_smooth()` using formula = 'y ~ s(x, bs = "cs")'
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-2.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-2.png)<!-- -->
 
 ``` r
 ggplot(fit_amle_long, aes(x = session_errors, y = value)) +
@@ -696,7 +696,7 @@ ggplot(fit_amle_long, aes(x = session_errors, y = value)) +
 
     ## `geom_smooth()` using formula = 'y ~ s(x, bs = "cs")'
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-3.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-3.png)<!-- -->
 
 ``` r
 ggplot(fit_amle_long, aes(x = session_accuracy, y = value)) +
@@ -708,7 +708,7 @@ ggplot(fit_amle_long, aes(x = session_accuracy, y = value)) +
 
     ## `geom_smooth()` using formula = 'y ~ s(x, bs = "cs")'
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-4.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-4.png)<!-- -->
 
 ``` r
 ggplot(fit_amle_long, aes(x = median_rt, y = value)) +
@@ -720,7 +720,7 @@ ggplot(fit_amle_long, aes(x = median_rt, y = value)) +
 
     ## `geom_smooth()` using formula = 'y ~ s(x, bs = "cs")'
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-5.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-5.png)<!-- -->
 
 ### Stability over time
 
@@ -1225,7 +1225,7 @@ ggsave(here("output", "parameter_estimates_boxplot.png"), plot = p_parameter_est
 p_parameter_estimates
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-boxplot-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-boxplot-1.png)<!-- -->
 Pairwise correlations between parameters:
 
 ``` r
@@ -1369,7 +1369,7 @@ p_pairwise_corrs
     ## Warning: No shared levels found between `names(values)` of the manual scale and
     ## the data's colour values.
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-correlations-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-correlations-1.png)<!-- -->
 
 Combine into one plot:
 
@@ -1509,7 +1509,7 @@ ggsave(here("output", "parameter_estimates_correlations.png"), plot = p_combined
 p_combined
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-combined-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-combined-1.png)<!-- -->
 
 ## Fact-level offsets
 
@@ -1539,7 +1539,7 @@ ggplot(fit_delta_alpha_avg, aes(x = reorder_within(fact_id, delta_alpha_mean, le
         panel.grid.major.x = element_blank())
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/delta-alpha-by-lesson-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/delta-alpha-by-lesson-1.png)<!-- -->
 
 Some facts/lessons were only encountered by a small number of
 participants:
@@ -1550,7 +1550,7 @@ ggplot(fit_delta_alpha_avg, aes(x = N)) +
   labs(x = "Number of participants who encountered the fact", y = "Count")
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/num-participants-per-fact-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/num-participants-per-fact-1.png)<!-- -->
 To quantify the agreement in relative difficulty across participants, we
 can compute the intra-class correlation (ICC) of $\Delta\alpha$
 estimates across facts. However, the fact that each participant’s delta
@@ -1575,7 +1575,7 @@ ggplot(fit_delta_alpha, aes(x = reorder_within(fact_id, fact_alpha, lesson_id, m
         panel.grid.major.x = element_blank())
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/05_fit_model_files/figure-gfm/delta-alpha-by-lesson-2-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/delta-alpha-by-lesson-2-1.png)<!-- -->
 
 Then, compute ICC from a mixed-effects regression model with random
 intercepts for participants and lessons:
