@@ -2,7 +2,9 @@
 
 Code and data accompanying the paper *Idiographic Memory Modelling in ACT-R using Alternating Maximum Likelihood Estimation* (van der Velde, Wilschut, Hake, van Rijn, & Stocco).
 
-The repository contains two analysis pipelines, with scripts numbered sequentially across the whole project:
+The repository contains a model walkthrough notebook and two analysis pipelines, with scripts numbered sequentially across the whole project:
+
+- **`00_model_walkthrough.Rmd`** — a self-contained introduction to the ACT-R memory model: activation function, likelihood functions for accuracy and response time, and the effect of each parameter on behaviour.
 
 - **`simulation/`** (scripts 01–03) — a parameter-recovery study on synthetic data, establishing that the five participant-level ACT-R parameters and the fact-level offsets are jointly identifiable from realistic amounts of retrieval-practice data.
 - **`example-application/`** (scripts 04–06) — an application to the longitudinal clinical data of [Hake et al. (2024)](https://www.medrxiv.org/content/10.1101/2024.03.15.24304345v1), fitting the model and asking which parameters distinguish mild cognitive impairment (MCI) from healthy controls (HC).
@@ -14,6 +16,7 @@ Both pipelines share a single implementation of the ACT-R likelihood, the simula
 ```
 actr-amle/
 ├── Makefile                  One entry point for every step (see `make help`)
+├── 00_model_walkthrough.Rmd  Model walkthrough notebook (activation, likelihoods, parameters)
 ├── R/                        Shared model code
 │   ├── sim-mle.R             Simulator + AMLE fitting / recovery functions
 │   └── actr_ll.cpp           C++ likelihood (compiled on load)
@@ -34,7 +37,8 @@ actr-amle/
 │       ├── 04_prepare_data.R
 │       ├── 05_fit_model.Rmd
 │       └── 06_classification.Rmd
-└── output/                   All figures (named PNGs from ggsave)
+└── output/                   All figures (named PNGs from ggsave) and rendered notebooks
+    └── 00_model_walkthrough.nb.html
 ```
 
 ## Reproducing the analyses
@@ -74,8 +78,9 @@ Run everything end to end with `make all`.
 
 Everything lands in a single [`output/`](./output) folder. Each notebook renders to a GitHub-viewable `.md` (with its `<name>_files/` figure folder alongside), and the named paper figures are also written there as PNGs via `ggsave()`.
 
-Rendered analysis notebooks (one `.md` per script):
+Rendered analysis notebooks:
 
+- Model walkthrough: [00 model walkthrough](./output/00_model_walkthrough.nb.html) (R Notebook, self-contained HTML)
 - Simulation: [01 simulate data](./output/01_simulate_data.md) · [02 greedy parameter selection](./output/02_greedy_parameter_selection.md) · [03 parameter recovery](./output/03_parameter_recovery.md)
 - Example application: [05 model fitting](./output/05_fit_model.md) · [06 classification](./output/06_classification.md)
 
