@@ -1,7 +1,7 @@
 Simulation: generating synthetic retrieval-practice data
 ================
 Thomas Wilschut
-Last updated: 2026-06-12
+Last updated: 2026-06-30
 
 - [Setup](#setup)
 - [Simulate data](#simulate-data)
@@ -63,7 +63,7 @@ details on the simulation procedure, see the `sim_mle.R` script.
 
 Each learner is assigned a set of person-level parameters (drawn from
 the truncated normal distributions in `sim-mle.R`), and each fact within
-a learner gets a fact-level Speed of Forgetting offset (Δα). The
+a learner gets a fact-level Speed of Forgetting offset (Δφ). The
 simulator then generates a study trial plus repeated retrieval trials
 per fact, recording response accuracy and response time for every trial.
 The first encounter of each fact is flagged with `is_study == TRUE` and
@@ -107,15 +107,15 @@ param_levels <- c(
 sim_test <- sim[is_study == FALSE]
 
 param_long <- sim_test %>%
-  distinct(user_id, true_alpha, true_tau, true_s, true_lf, true_ter) %>%
+  distinct(user_id, true_phi, true_tau, true_s, true_lf, true_ter) %>%
   pivot_longer(
-    cols      = c(true_alpha, true_tau, true_s, true_lf, true_ter),
+    cols      = c(true_phi, true_tau, true_s, true_lf, true_ter),
     names_to  = "parameter",
     values_to = "value"
   ) %>%
   mutate(
     parameter = recode(parameter,
-      "true_alpha" = "Speed of Forgetting",
+      "true_phi" = "Speed of Forgetting",
       "true_tau"   = "Retrieval threshold",
       "true_s"     = "Activation noise",
       "true_lf"    = "Latency factor",
@@ -126,20 +126,20 @@ param_long <- sim_test %>%
 
 # ── B & C: Parameters vs behavioural outcomes (per learner) ───────────────────
 learner_summary <- sim_test %>%
-  group_by(user_id, true_alpha, true_tau, true_s, true_lf, true_ter) %>%
+  group_by(user_id, true_phi, true_tau, true_s, true_lf, true_ter) %>%
   summarise(
     accuracy = mean(correct),
     med_rt   = median(rt),
     .groups  = "drop"
   ) %>%
   pivot_longer(
-    cols      = c(true_alpha, true_tau, true_s, true_lf, true_ter),
+    cols      = c(true_phi, true_tau, true_s, true_lf, true_ter),
     names_to  = "parameter",
     values_to = "param_value"
   ) %>%
   mutate(
     parameter = recode(parameter,
-      "true_alpha" = "Speed of Forgetting",
+      "true_phi" = "Speed of Forgetting",
       "true_tau"   = "Retrieval threshold",
       "true_s"     = "Activation noise",
       "true_lf"    = "Latency factor",
@@ -237,7 +237,7 @@ ggsave(here::here("output", "parameter_distributions_and_behaviour.png"), width 
 
 Panel A shows the distributions of the five simulated person-level
 parameters. Panels B and C show how each parameter relates to aggregate
-accuracy and median RT, respectively. Speed of forgetting (α) and
+accuracy and median RT, respectively. Speed of forgetting (φ) and
 retrieval threshold (τ) should show the clearest relationships with
 accuracy; latency factor (F) and non-retrieval time (t<sub>er</sub>)
 should primarily affect RT.
@@ -374,13 +374,13 @@ fact_summary <- sim[is_study == FALSE, .(
 p_da_acc <- ggplot(fact_summary, aes(x = true_fact_offset, y = accuracy)) +
   geom_point(alpha = 0.15, color = "#1b9e77") +
   geom_smooth(method = "lm", color = "black", se = TRUE) +
-  labs(title = "Fact offset vs. accuracy", x = expression(Delta*alpha), y = "Mean accuracy") +
+  labs(title = "Fact offset vs. accuracy", x = expression(Delta*phi), y = "Mean accuracy") +
   theme_bw()
 
 p_da_rt <- ggplot(fact_summary, aes(x = true_fact_offset, y = median_rt)) +
   geom_point(alpha = 0.15, color = "#1b9e77") +
   geom_smooth(method = "lm", color = "black", se = TRUE) +
-  labs(title = "Fact offset vs. RT", x = expression(Delta*alpha), y = "Median RT (s)") +
+  labs(title = "Fact offset vs. RT", x = expression(Delta*phi), y = "Median RT (s)") +
   theme_bw()
 
 p_da_acc + p_da_rt
@@ -391,7 +391,7 @@ p_da_acc + p_da_rt
 
 ![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
-Higher fact offsets (Δα) make a fact harder to retain, so accuracy
+Higher fact offsets (Δφ) make a fact harder to retain, so accuracy
 should decrease and RT should increase with larger offsets. Each dot is
 one learner–fact combination.
 

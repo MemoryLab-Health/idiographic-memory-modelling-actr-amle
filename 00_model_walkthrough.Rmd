@@ -28,7 +28,7 @@ library(grid)
 # Set up parallel processing
 plan(multisession, workers = 8)
 
-source(here("scripts", "actr-functions.R"))
+source(here("R", "sim-mle.R"))
 
 # Define colours
 col_blue <- "#0571b0"
@@ -40,7 +40,7 @@ col_green <- "#1b9e77"
 
 The ACT-R memory model describes retrieval performance using a set of equations, which involve the following parameters:
 
-  - $\alpha$: Speed of Forgetting
+  - $\phi$: Speed of Forgetting
   - $\tau$: Retrieval threshold
   - $s$: Activation noise
   - $F$: Latency factor
@@ -54,9 +54,9 @@ The memory model can be made to fit an individual's data, and predict their futu
 The activation of a memory chunk $x$ with previous encounters at $t_0$, $\ldots$, $t_n$ seconds ago, is given by the following equation:
 
 $$A_x(t) = \ln\left(\sum_{j=0}^{n} t_j^{-d_x(t)} \right)$$
-where the decay of each new trace is determined in part by the activation immediately prior to the moment of its creation (this activation in the time step preceding the creation of the new trace is indicated by $A_x(t_{n-1})$), scaled by a constant ($c$), and in part by a chunk-specific offset in decay ($\alpha_x$), which we call the Speed of Forgetting:
+where the decay of each new trace is determined in part by the activation immediately prior to the moment of its creation (this activation in the time step preceding the creation of the new trace is indicated by $A_x(t_{n-1})$), scaled by a constant ($c$), and in part by a chunk-specific offset in decay ($\phi_x$), which we call the Speed of Forgetting:
 
-$$d_x(t) = ce^{A_x(t_{n-1})} + \alpha_x$$
+$$d_x(t) = ce^{A_x(t_{n-1})} + \phi_x$$
 For example, the activation over time of a chunk with encounters at 0, 10 and 60 seconds (with default parameter settings) looks as follows, where each encounter adds a new decaying trace:
 ```{r activation-example}
 t <- seq(0, 100, 0.1)
@@ -111,7 +111,7 @@ Incorrect responses are visualised as negative response times.
 
 ```{r calculate-parameter-examples}
 param_setting_examples <- list(
-  alpha = c(.1, .2, .3, .4, .5),
+  phi = c(.1, .2, .3, .4, .5),
   tau = c(-2, -1, 0, 1, 2),
   s = c(.01, .05, .1, .15, .2),
   lf = c(.25, .5, 1, 1.5, 2),
@@ -119,7 +119,7 @@ param_setting_examples <- list(
 )
 
 param_default <- list(
-  alpha = .3,
+  phi = .3,
   tau = 0,
   s = .1,
   lf = 1,
@@ -135,7 +135,7 @@ make_varying_param <- function(name, values, defaults) {
 }
 
 param_grid <- rbindlist(list(
-  make_varying_param("alpha", param_setting_examples$alpha, param_default),
+  make_varying_param("phi", param_setting_examples$phi, param_default),
   make_varying_param("tau",   param_setting_examples$tau,   param_default),
   make_varying_param("s",     param_setting_examples$s,     param_default),
   make_varying_param("lf",    param_setting_examples$lf,    param_default),
@@ -143,7 +143,7 @@ param_grid <- rbindlist(list(
 ))
 
 # Calculate activation, assuming previous encounters
-param_grid[, activation := calculate_activation_memory(t = 60, traces = c(0, 10, 20, 30, 40, 50), sof = alpha), by = .I]
+param_grid[, activation := calculate_activation_memory(t = 60, traces = c(0, 10, 20, 30, 40, 50), sof = phi), by = .I]
 
 # Sample responses
 n_responses <- 1e6
@@ -155,10 +155,10 @@ sample_correct <- function(n = 1, a, tau, s) {
 }
 
 sample_rt <- function (n = 1, a, s, lf, ter) {
-  alpha <- exp(-a) * lf
+  scale <- exp(-a) * lf
   beta <- sqrt(3) / (pi * s)
   u <- runif(n)
-  rt <- alpha * (u / (1 - u))^(1 / beta) + ter
+  rt <- scale * (u / (1 - u))^(1 / beta) + ter
   return (rt)
 }
 
@@ -178,10 +178,10 @@ sim_data <- param_grid[, sample_response(
   s   = s,
   lf  = lf,
   ter = ter
-), by = .(alpha, tau, s, lf, ter, varying)]
+), by = .(phi, tau, s, lf, ter, varying)]
 
 sim_data[, value := fcase(
-  varying == "alpha", alpha,
+  varying == "phi", phi,
   varying == "tau",   tau,
   varying == "s",     s,
   varying == "lf",    lf,
@@ -192,7 +192,7 @@ sim_data[, value := fcase(
 
 ```{r plot-parameter-examples}
 param_titles <- list(
-  alpha = "Speed of Forgetting",
+  phi = "Speed of Forgetting",
   tau   = "Retrieval threshold",
   s     = "Activation noise",
   lf    = "Latency factor",
@@ -200,7 +200,7 @@ param_titles <- list(
 )
 
 param_symbols <- list(
-  alpha = "alpha",
+  phi = "phi",
   tau   = "tau",
   s     = "s",
   lf    = "F",
@@ -249,7 +249,7 @@ rt_density_plot <- function(dt, param_name) {
 }
 
 # Also include the model schematic
-model_img <- readPNG(here("output", "actr_amle_model.png"))
+model_img <- readPNG(here("output", "actr_amle_schematic.png"))
 g <- rasterGrob(model_img, interpolate = TRUE)
 
 model_img_plot <- ggplot() +

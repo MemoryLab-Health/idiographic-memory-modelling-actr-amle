@@ -1,7 +1,7 @@
 Example application: Modelling memory function in MCI and healthy ageing
 ================
 Maarten van der Velde & Thomas Wilschut
-Last updated: 2026-06-12
+Last updated: 2026-06-30
 
 - [Overview](#overview)
 - [Setup](#setup)
@@ -43,7 +43,7 @@ control (HC) participants. MCI is known to affect both memory and
 non-memory cognitive processes, which is visible in participants’
 performance on the task: Hake et al. found that participants’ clinical
 status could be reliably determined from the Speed of Forgetting
-($\alpha$) parameter estimated from the data. However, in that analysis,
+($\phi$) parameter estimated from the data. However, in that analysis,
 other parameters of the memory model were held constant. Here, we fit
 the same data set using the AMLE method while allowing more parameters
 to vary, to see whether performance differences between individuals and
@@ -377,12 +377,21 @@ model to each session and save the results for future use. (Note:
 fitting takes a while!)
 
 ``` r
+delta_phi_file <- if (file.exists(here("data", "processed", "AMLE_delta_phi.csv"))) {
+  here("data", "processed", "AMLE_delta_phi.csv")
+} else {
+  here("data", "processed", "AMLE_delta_alpha.csv")
+}
+
 if (refit_model == FALSE &&
     file.exists(here("data", "processed", "AMLE_fit.csv")) &&
-    file.exists(here("data", "processed", "AMLE_delta_alpha.csv"))) {
+    file.exists(delta_phi_file)) {
   fit_amle <- fread(here("data", "processed", "AMLE_fit.csv"))
-  fit_delta_alpha <- fread(here("data", "processed", "AMLE_delta_alpha.csv"))
-  
+  fit_delta_phi <- fread(delta_phi_file)
+  # Backward compatibility: rename old column names if present
+  if ("delta_alpha" %in% names(fit_delta_phi)) setnames(fit_delta_phi, "delta_alpha", "delta_phi")
+  if ("alpha" %in% names(fit_amle)) setnames(fit_amle, "alpha", "phi")
+
 } else {
 
   # Fit model
@@ -409,16 +418,16 @@ if (refit_model == FALSE &&
   
   fit_amle <- rbindlist(fit_amle, fill = TRUE)
   
-  # Extract delta_alpha estimates
-  fit_delta_alpha <- fit_amle[, .(delta_alpha = delta_alpha_est), by = .(user_id, clinical_status, session, session_id, lesson_id, session_trials, session_errors, session_accuracy)]
-  fit_delta_alpha[, delta_alpha := lapply(delta_alpha, function (delta_alpha) {
-    as.data.table(delta_alpha, keep.rownames = "fact_id")
+  # Extract delta_phi estimates
+  fit_delta_phi <- fit_amle[, .(delta_phi = delta_phi_est), by = .(user_id, clinical_status, session, session_id, lesson_id, session_trials, session_errors, session_accuracy)]
+  fit_delta_phi[, delta_phi := lapply(delta_phi, function (delta_phi) {
+    as.data.table(delta_phi, keep.rownames = "fact_id")
   })]
-  fit_delta_alpha <- unnest(fit_delta_alpha, delta_alpha) |> as.data.table()
+  fit_delta_phi <- unnest(fit_delta_phi, delta_phi) |> as.data.table()
   
   # Save results
   fwrite(fit_amle, here("data", "processed", "AMLE_fit.csv"))
-  fwrite(fit_delta_alpha, here("data", "processed", "AMLE_delta_alpha.csv"))
+  fwrite(fit_delta_phi, here("data", "processed", "AMLE_delta_phi.csv"))
   
 }
 ```
@@ -432,9 +441,9 @@ times? Here, we use the fitted parameters to predict trial-level
 response times.
 
 ``` r
-fitted_session_params <- fit_amle[, .(session_id, alpha, tau, s, lf, ter)]
-fitted_session_params <- fit_delta_alpha[fitted_session_params, on = .(session_id)]
-fitted_session_params[, fact_sof := alpha + delta_alpha]
+fitted_session_params <- fit_amle[, .(session_id, phi, tau, s, lf, ter)]
+fitted_session_params <- fit_delta_phi[fitted_session_params, on = .(session_id)]
+fitted_session_params[, fact_sof := phi + delta_phi]
 fitted_session_params[, fact_id := gsub("d_", "", fact_id)]
 
 d_preds <- future_map(d_sessions, function (d_session) {
@@ -442,7 +451,7 @@ d_preds <- future_map(d_sessions, function (d_session) {
   session_params <- fitted_session_params[session_id == d_session$session_id[1]]
   
   # If session params is empty or parameters are NA, return NULL
-  if (nrow(session_params) == 0 || any(is.na(session_params[, .(delta_alpha, alpha, tau, s, lf, ter)]))) {
+  if (nrow(session_params) == 0 || any(is.na(session_params[, .(delta_phi, phi, tau, s, lf, ter)]))) {
     return (NULL)
   }
   
@@ -631,7 +640,7 @@ ggsave(here("output", "predicted_vs_observed_rt_density.png"), width = 10, heigh
 ``` r
 setorder(fit_amle, clinical_status, user_id, session, lesson_id)
 fit_amle[, session_aligned := 1:.N, by = .(user_id)]
-fit_amle_long <- melt(fit_amle, measure.vars = c("alpha", "tau", "s", "lf", "ter"))
+fit_amle_long <- melt(fit_amle, measure.vars = c("phi", "tau", "s", "lf", "ter"))
 fit_amle_long <- user_ids[fit_amle_long, on = .(user_id, clinical_status)]
 ```
 
@@ -765,7 +774,7 @@ for (param in fit_amle_long[, unique(variable)]) {
 }
 ```
 
-    ## [1] "Parameter: alpha"
+    ## [1] "Parameter: phi"
     ##                          type       ICC        F df1  df2             p
     ## Single_raters_absolute   ICC1 0.2797114 23.52328  50 2907 5.932489e-176
     ## Single_random_raters     ICC2 0.2815072 29.45048  50 2850 1.018702e-217
@@ -853,7 +862,7 @@ fit_amle_long_avg <- fit_amle_long[, .(value_mean = mean(value, na.rm = TRUE)), 
 Test: Is there a significant difference in parameters between
 participants of different clinical status?
 
-Yes: alpha, lf, ter. No: tau, s.
+Yes: phi, lf, ter. No: tau, s.
 
 ``` r
 for (param in fit_amle_long[, unique(variable)]) {
@@ -864,7 +873,7 @@ for (param in fit_amle_long[, unique(variable)]) {
 }
 ```
 
-    ## [1] "Parameter: alpha"
+    ## [1] "Parameter: phi"
     ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
     ## lmerModLmerTest]
     ## Formula: value ~ clinical_status + (1 | user_id) + (1 | lesson_id)
@@ -1018,12 +1027,12 @@ Are parameters correlated?
 fit_amle_avg <- dcast(fit_amle_long_avg, user_id_simple + clinical_status ~ variable, value.var = "value_mean")
 
 fit_amle_avg_plot <- fit_amle_avg[, .(
-  alpha = mean(alpha, na.rm = TRUE),
+  phi = mean(phi, na.rm = TRUE),
   tau = mean(tau, na.rm = TRUE),
   s = mean(s, na.rm = TRUE),
   lf = mean(lf, na.rm = TRUE),
   ter = mean(ter, na.rm = TRUE),
-  n_sessions = sum(!is.na(alpha))),
+  n_sessions = sum(!is.na(phi))),
   by = .(user_id = user_id_simple, clinical_status)]
 
 param_cols <- setdiff(names(fit_amle_avg_plot), c("user_id", "clinical_status", "n_sessions"))
@@ -1041,11 +1050,11 @@ fit_amle_avg_plot <- melt(
 
 # Custom ticks per parameter (raw values)
 ticks_list <- list(
-  alpha = c(0.1, 0.3, 0.5, 0.7, 0.9),
-  tau   = c(-4, -3, -2, -1),
-  s     = c(0.1, 0.2, 0.3, 0.4),
-  lf    = c(0, 1, 2, 3),
-  ter   = c(.5, 1, 1.5, 2, 2.5)
+  phi = c(0.1, 0.3, 0.5, 0.7, 0.9),
+  tau = c(-4, -3, -2, -1),
+  s   = c(0.1, 0.2, 0.3, 0.4),
+  lf  = c(0, 1, 2, 3),
+  ter = c(.5, 1, 1.5, 2, 2.5)
 )
 
 # Map ticks to a long data.table for annotation
@@ -1089,8 +1098,8 @@ param_x <- seq_along(param_cols)
 y_max <- max(c(fit_amle_avg_plot$z, group_means$z))
 
 # Create a dataframe for top labels
-param_titles <- list( alpha = "Speed of Forgetting", tau = "Retrieval threshold", s = "Activation noise", lf = "Latency factor", ter = "Non-retrieval time" )
-param_symbols <- list( alpha = "alpha", tau = "tau", s = "s", lf = "F", ter = "t[er]" )
+param_titles <- list( phi = "Speed of Forgetting", tau = "Retrieval threshold", s = "Activation noise", lf = "Latency factor", ter = "Non-retrieval time" )
+param_symbols <- list( phi = "phi", tau = "tau", s = "s", lf = "F", ter = "t[er]" )
 
 param_label_df <- data.frame(
   x = param_x,
@@ -1211,13 +1220,13 @@ Plot parameters separately:
 
 ``` r
 p_parameter_estimates <- ggplot(fit_amle_long_avg, aes(x = variable, y = value_mean, fill = clinical_status)) +
-  facet_wrap(~ variable, scales = "free", ncol = 5, labeller = labeller(variable = c(alpha = "Speed of Forgetting", tau = "Retrieval threshold", s = "Activation noise", lf = "Latency factor", ter = "Non-retrieval time"))) +
+  facet_wrap(~ variable, scales = "free", ncol = 5, labeller = labeller(variable = c(phi = "Speed of Forgetting", tau = "Retrieval threshold", s = "Activation noise", lf = "Latency factor", ter = "Non-retrieval time"))) +
   geom_boxplot(outlier.shape = NA, alpha = .5) +
   geom_point(position = position_jitterdodge(jitter.height = 0), alpha = .5, aes(colour = clinical_status)) +
   labs(x = "Parameter", y = "Estimated value", colour = "Clinical status", fill = "Clinical status") +
   scale_colour_manual(values = c("HC" = col_blue, "MCI" = col_red)) +
   scale_fill_manual(values = c("HC" = col_blue, "MCI" = col_red)) +
-  scale_x_discrete(labels = c(alpha = expression(alpha), tau = expression(tau), s = expression(s), lf = expression(F), ter = expression(t[er]))) +
+  scale_x_discrete(labels = c(phi = expression(phi), tau = expression(tau), s = expression(s), lf = expression(F), ter = expression(t[er]))) +
   theme(legend.position = "bottom")
 
 # Paper Figure 9A: estimated parameters by clinical status (boxplots)
@@ -1514,82 +1523,82 @@ p_combined
 ## Fact-level offsets
 
 The relative difficulty of facts was estimated through offsets to a
-participant’s $\alpha$ parameter: $\Delta\alpha$. In the fitting
-process, these offsets were continually re-centered on zero, meaning
-that the average $\Delta\alpha$ across facts for each participant is
+participant’s $\phi$ parameter: $\Delta\phi$. In the fitting process,
+these offsets were continually re-centered on zero, meaning that the
+average $\Delta\phi$ across facts for each participant is
 (approximately) zero, which makes it easier to compare them across
 participants.
 
-The plot below shows the mean $\Delta\alpha$ for each fact (+/- 1 SD),
+The plot below shows the mean $\Delta\phi$ for each fact (+/- 1 SD),
 averaged across participants who encountered it, and organised by
 lesson.
 
 ``` r
-fit_delta_alpha_avg <- fit_delta_alpha[, .(.N, delta_alpha_mean = mean(delta_alpha), delta_alpha_sd = sd(delta_alpha)), by = .(lesson_id, fact_id)]
+fit_delta_phi_avg <- fit_delta_phi[, .(.N, delta_phi_mean = mean(delta_phi), delta_phi_sd = sd(delta_phi)), by = .(lesson_id, fact_id)]
 
-ggplot(fit_delta_alpha_avg, aes(x = reorder_within(fact_id, delta_alpha_mean, lesson_id, min), y = delta_alpha_mean)) +
-  geom_errorbar(aes(ymin = delta_alpha_mean - delta_alpha_sd, ymax = delta_alpha_mean + delta_alpha_sd), width = 0, alpha = .25) +
+ggplot(fit_delta_phi_avg, aes(x = reorder_within(fact_id, delta_phi_mean, lesson_id, min), y = delta_phi_mean)) +
+  geom_errorbar(aes(ymin = delta_phi_mean - delta_phi_sd, ymax = delta_phi_mean + delta_phi_sd), width = 0, alpha = .25) +
   geom_point(aes(alpha = N)) +
   facet_wrap(~ lesson_id, scales = "free_x", ncol = 8) +
   scale_x_reordered() +
   geom_hline(yintercept = 0, colour = col_green) +
-  labs(x = "Fact", y = expression(Delta~alpha)) +
+  labs(x = "Fact", y = expression(Delta~phi)) +
   theme(axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
         panel.grid.major.x = element_blank())
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/delta-alpha-by-lesson-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/delta-phi-by-lesson-1.png)<!-- -->
 
 Some facts/lessons were only encountered by a small number of
 participants:
 
 ``` r
-ggplot(fit_delta_alpha_avg, aes(x = N)) +
+ggplot(fit_delta_phi_avg, aes(x = N)) +
   geom_histogram(binwidth = 1) +
   labs(x = "Number of participants who encountered the fact", y = "Count")
 ```
 
 ![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/num-participants-per-fact-1.png)<!-- -->
 To quantify the agreement in relative difficulty across participants, we
-can compute the intra-class correlation (ICC) of $\Delta\alpha$
-estimates across facts. However, the fact that each participant’s delta
-alpha estimates center around zero means that a mixed-effects model with
+can compute the intra-class correlation (ICC) of $\Delta\phi$ estimates
+across facts. However, the fact that each participant’s delta phi
+estimates center around zero means that a mixed-effects model with
 random intercepts for participants cannot be fitted to the data, as the
 participant-level variance is effectively zero. We’ll calculate the net
-alpha value for each fact by adding the participant’s overall alpha to
-the fact-specific delta alpha:
+phi value for each fact by adding the participant’s overall phi to the
+fact-specific delta phi:
 
 ``` r
-user_alpha <- fit_amle_long[variable == "alpha", .(user_id, session_id, user_alpha = value)]
-fit_delta_alpha <- user_alpha[fit_delta_alpha, on = .(user_id, session_id)]
-fit_delta_alpha[, fact_alpha := user_alpha + delta_alpha]
+user_phi <- fit_amle_long[variable == "phi", .(user_id, session_id, user_phi = value)]
+fit_delta_phi <- user_phi[fit_delta_phi, on = .(user_id, session_id)]
+fit_delta_phi[, fact_phi := user_phi + delta_phi]
 
-ggplot(fit_delta_alpha, aes(x = reorder_within(fact_id, fact_alpha, lesson_id, mean), y = fact_alpha)) +
+ggplot(fit_delta_phi, aes(x = reorder_within(fact_id, fact_phi, lesson_id, mean), y = fact_phi)) +
   geom_line(aes(group = user_id), alpha = .2) +
   facet_wrap(~ lesson_id, scales = "free_x", ncol = 8) +
   scale_x_reordered() +
-  labs(x = "Fact", y = expression(Delta~alpha)) +
+  labs(x = "Fact", y = expression(Delta~phi)) +
   theme(axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
         panel.grid.major.x = element_blank())
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/delta-alpha-by-lesson-2-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/delta-phi-by-lesson-2-1.png)<!-- -->
 
 Then, compute ICC from a mixed-effects regression model with random
 intercepts for participants and lessons:
 
 ``` r
-delta_alpha_wide <- dcast(fit_delta_alpha, fact_id ~ user_id, value.var = "fact_alpha")
-icc_delta_alpha <- ICC(delta_alpha_wide[, -1, with = FALSE], lmer = TRUE)
+delta_phi_wide <- dcast(fit_delta_phi, fact_id ~ user_id, value.var = "fact_phi")
+icc_delta_phi <- ICC(delta_phi_wide[, -1, with = FALSE], lmer = TRUE)
 ```
 
     ## Warning in pf(FJ, dfJ, dfE, log.p = TRUE): pbeta(*, log.p=TRUE) ->
     ## bpser(a=21725, b=25, x=0.690568,...) underflow to -Inf
 
 ``` r
-print(icc_delta_alpha$results)
+print(icc_delta_phi$results)
 ```
 
     ##                          type       ICC        F df1   df2 p lower bound

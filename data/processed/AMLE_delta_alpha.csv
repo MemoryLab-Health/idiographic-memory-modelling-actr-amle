@@ -1,4 +1,4 @@
-user_id,clinical_status,session,session_id,lesson_id,session_trials,session_errors,session_accuracy,fact_id,delta_alpha
+user_id,clinical_status,session,session_id,lesson_id,session_trials,session_errors,session_accuracy,fact_id,delta_phi
 user_01,MCI,1,session_1192,lesson_07,20,4,0.8,d_fact_604,-0.292423206385851
 user_01,MCI,1,session_1192,lesson_07,20,4,0.8,d_fact_701,-0.08497549580142
 user_01,MCI,1,session_1192,lesson_07,20,4,0.8,d_fact_666,-0.539054976147317

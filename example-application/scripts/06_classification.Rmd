@@ -39,14 +39,14 @@ A few display lookups (full parameter names and a consistent colour palette) tha
 
 ```{r}
 # ── Shared constants ──────────────────────────────────────────────────────────
-PARAM_COL <- c(alpha = "alpha", tau = "tau", s = "s", F = "lf", ter = "ter")
+PARAM_COL <- c(phi = "phi", tau = "tau", s = "s", F = "lf", ter = "ter")
 
 param_display <- c(
-  alpha = "Speed of Forgetting",
-  tau   = "Retrieval threshold",
-  s     = "Activation noise",
-  F     = "Latency factor",
-  ter   = "Non-retrieval time"
+  phi = "Speed of Forgetting",
+  tau = "Retrieval threshold",
+  s   = "Activation noise",
+  F   = "Latency factor",
+  ter = "Non-retrieval time"
 )
 
 param_cols <- setNames(
@@ -166,7 +166,7 @@ person_means <- function(fits_dt, free_params, clinical_df) {
 
 # ── Greedy forward selection (person-average AUC criterion) ───────────────────
 greedy_select_auc <- function(d_filtered,
-                              all_params = c("alpha", "tau", "s", "F", "ter"),
+                              all_params = c("phi", "tau", "s", "F", "ter"),
                               n_boot     = 500,
                               full_iter  = 100) {
 
@@ -258,10 +258,18 @@ saveRDS(greedy_auc, here::here("data", "processed", "fits", "greedy_auc_results.
 
 ## Plot: person-average greedy selection
 
-This plots the person-average selection path (Figure 10A): the solid line is the selected path, faint points are the non-selected candidates at each step, and the shaded band is the 95% bootstrap CI on the selected path. F is selected first and α second, after which adding further parameters does not improve classification.
+This plots the person-average selection path (Figure 10A): the solid line is the selected path, faint points are the non-selected candidates at each step, and the shaded band is the 95% bootstrap CI on the selected path. F is selected first and φ second, after which adding further parameters does not improve classification.
 
 ```{r fig.width=10, fig.height=6}
 greedy_auc <- readRDS(here::here("data", "processed", "fits", "greedy_auc_results.rds"))
+
+# Backward compatibility: rename alpha -> phi in cached results
+if ("alpha" %in% names(greedy_auc$learner_fits)) setnames(greedy_auc$learner_fits, "alpha", "phi")
+if ("param_added" %in% names(greedy_auc$learner_fits)) greedy_auc$learner_fits[param_added == "alpha", param_added := "phi"]
+if ("param_added" %in% names(greedy_auc$summary))      greedy_auc$summary[param_added == "alpha", param_added := "phi"]
+if ("free_params" %in% names(greedy_auc$summary)) {
+  greedy_auc$summary[, free_params := lapply(free_params, function(fp) replace(fp, fp == "alpha", "phi"))]
+}
 
 summary_dt <- copy(greedy_auc$summary)
 summary_dt[, param_label := param_display[param_added]]
@@ -359,13 +367,13 @@ seg_single[, y_from := selection_single$auc_corrected[
 ## Greedy selection: single-session criterion (steps 3–5)
 
 The selection path diverges from step 3 onward. Since steps 1–2 selected the
-same parameters (F, then alpha) under both criteria, we reuse those fits and
+same parameters (F, then phi) under both criteria, we reuse those fits and
 rerun only steps 3–5 with single-session AUC as the selection criterion.
 
 ```{r}
 # ── Greedy selection from a given step (reusing earlier fits) ──────────────────
 greedy_select_auc_from_step <- function(d_filtered,
-                                        already_selected = c("F", "alpha"),
+                                        already_selected = c("F", "phi"),
                                         remaining_params = c("tau", "s", "ter"),
                                         start_step       = 3,
                                         n_boot           = 500,
@@ -457,7 +465,7 @@ greedy_select_auc_from_step <- function(d_filtered,
 ```{r, eval=FALSE}
 new_steps <- greedy_select_auc_from_step(
   d_filtered,
-  already_selected = c("F", "alpha"),
+  already_selected = c("F", "phi"),
   remaining_params = c("tau", "s", "ter"),
   start_step       = 3,
   n_boot           = 500
@@ -505,6 +513,14 @@ saveRDS(greedy_auc_single, here::here("data", "processed", "fits", "greedy_auc_r
 
 ```{r fig.width=12, fig.height=6}
 greedy_auc_single <- readRDS(here::here("data", "processed", "fits", "greedy_auc_results_single.rds"))
+
+# Backward compatibility: rename alpha -> phi in cached results
+if ("alpha" %in% names(greedy_auc_single$learner_fits)) setnames(greedy_auc_single$learner_fits, "alpha", "phi")
+if ("param_added" %in% names(greedy_auc_single$learner_fits)) greedy_auc_single$learner_fits[param_added == "alpha", param_added := "phi"]
+if ("param_added" %in% names(greedy_auc_single$summary))      greedy_auc_single$summary[param_added == "alpha", param_added := "phi"]
+if ("free_params" %in% names(greedy_auc_single$summary)) {
+  greedy_auc_single$summary[, free_params := lapply(free_params, function(fp) replace(fp, fp == "alpha", "phi"))]
+}
 
 # ── Panel B: single-session selection path ────────────────────────────────────
 summary_single_b <- copy(greedy_auc_single$summary)

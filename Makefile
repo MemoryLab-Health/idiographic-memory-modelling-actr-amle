@@ -38,11 +38,15 @@ FIT     := data/processed/AMLE_fit.csv
 
 .PHONY: all simulation application \
         sim-data sim-greedy sim-recovery data fit classify \
-        help clean clean-cache
+        walkthrough help clean clean-cache
 .DEFAULT_GOAL := help
 
-## all          : run both pipelines end to end
-all: simulation application
+## all          : run both pipelines end to end (including walkthrough)
+all: walkthrough simulation application
+
+## walkthrough  : 00 model walkthrough notebook (renders to output/)
+walkthrough:
+	$(call RENDER,00_model_walkthrough.Rmd)
 
 # ---------------------------------------------------------------------------
 # Simulation pipeline (synthetic data; self-contained, no raw data needed)
@@ -72,9 +76,12 @@ application: data fit classify
 
 ## data         : 04 (re)build processed data from raw (needs data/raw/hake2024.Rdata)
 data:
-	@test -f $(RAW) || { echo ">> $(RAW) not found — see data/raw/.gitkeep."; \
-	  echo ">> Processed data is already shipped in data/processed/; skipping."; exit 0; }
-	$(R) $(APP_DIR)/04_prepare_data.R
+	@if test -f $(RAW); then \
+	  $(R) $(APP_DIR)/04_prepare_data.R; \
+	else \
+	  echo ">> $(RAW) not found — see data/raw/.gitkeep."; \
+	  echo ">> Processed data is already shipped in data/processed/; skipping."; \
+	fi
 
 ## fit          : 05 fit the AMLE model -> AMLE_fit.csv + figures
 fit:

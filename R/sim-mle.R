@@ -9,7 +9,7 @@
 # implementation matching the paper.  Key specification choices:
 #
 #   correct_likelihood:  1 / (1 + exp(-(a - tau) / s))
-#   rt_likelihood:       log-logistic with alpha = F*exp(-a), beta = 1/s
+#   rt_likelihood:       log-logistic with scale = F*exp(-a), beta = 1/s
 #                        (paper eq. 10: beta = 1/s, NOT sqrt(3)/(pi*s))
 #   calculate_activation_memory:  adaptive decay with c = 0.25
 #   RT for incorrect responses:   uses tau as activation (paper p.5)
@@ -93,13 +93,13 @@ correct_likelihood <- function(a, tau, s) {
 }
 
 #' Probability density of reaction time (log-logistic).
-#' Paper eq. 10:  alpha = F * exp(-a),  beta = 1/s
+#' Paper eq. 10:  scale = F * exp(-a),  beta = 1/s
 rt_likelihood <- function(rt, a, s, lf, t0) {
-  alpha <- exp(-a) * lf
+  scale <- exp(-a) * lf
   beta  <- 1 / s
   t     <- rt - t0
   t[t < 0] <- 0
-  (beta / alpha) * (t / alpha)^(beta - 1) / (1 + (t / alpha)^beta)^2
+  (beta / scale) * (t / scale)^(beta - 1) / (1 + (t / scale)^beta)^2
 }
 
 # =============================================================================
@@ -153,7 +153,7 @@ simulate_fact_learner_data <- function(
   #   - SDs chosen to give realistic spread around those means
   #   - Bounds reflect fit_session_amle_df constraints & observed data range
   sof_mean = 0.3,  sof_sd = 0.05, sof_min = 0.15, sof_max = 0.5,
-  sof_fact_sd = 0.05,        # SD of fact-level offsets (delta_alpha)
+  sof_fact_sd = 0.05,        # SD of fact-level offsets (delta_phi)
   
   tau_mean = -0.8, tau_sd = 0.15, tau_min = -1.5, tau_max = 0.0,
   s_mean   = 0.1,  s_sd  = 0.03,  s_min  = 0.02,  s_max  = 0.25,
@@ -173,7 +173,7 @@ simulate_fact_learner_data <- function(
   on.exit(close(pb))
   
   # --- Draw true learner-level parameters (truncated normal) -----------------
-  true_alpha <- pmin(pmax(rnorm(n_learners, sof_mean, sof_sd), sof_min), sof_max)
+  true_phi <- pmin(pmax(rnorm(n_learners, sof_mean, sof_sd), sof_min), sof_max)
   true_tau   <- pmin(pmax(rnorm(n_learners, tau_mean, tau_sd), tau_min), tau_max)
   true_s     <- pmin(pmax(rnorm(n_learners, s_mean, s_sd),     s_min),   s_max)
   true_lf    <- pmin(pmax(rnorm(n_learners, lf_mean, lf_sd),   lf_min),  lf_max)
@@ -181,7 +181,7 @@ simulate_fact_learner_data <- function(
   
   # --- Draw fact offsets & impose sum-to-zero per learner --------------------
   # This matches the constraint in the AMLE E-step:
-  #   delta_alpha <- delta_alpha - mean(delta_alpha)
+  #   delta_phi <- delta_phi - mean(delta_phi)
   true_fact_offset <- matrix(rnorm(n_learners * n_facts, 0, sof_fact_sd),
                              nrow = n_learners, ncol = n_facts)
   for (i in seq_len(n_learners)) {
@@ -196,7 +196,7 @@ simulate_fact_learner_data <- function(
   # --- Simulation loop -------------------------------------------------------
   for (uid in seq_len(n_learners)) {
     
-    alpha <- true_alpha[uid]
+    phi   <- true_phi[uid]
     tau   <- true_tau[uid]
     s     <- true_s[uid]
     lf    <- true_lf[uid]
@@ -218,7 +218,7 @@ simulate_fact_learner_data <- function(
     for (i in seq_len(nrow(trials))) {
       fid         <- trials$factId[i]
       fact_offset <- true_fact_offset[uid, fid]
-      total_sof   <- alpha + fact_offset
+      total_sof   <- phi + fact_offset
       traces      <- fact_traces[[fid]]
       n_prev      <- length(traces)
       
@@ -238,7 +238,7 @@ simulate_fact_learner_data <- function(
           rt               = NA_real_,
           correct          = NA,
           is_study         = TRUE,
-          true_alpha       = alpha,
+          true_phi         = phi,
           true_fact_offset = fact_offset,
           true_total_sof   = total_sof,
           true_tau         = tau,
@@ -280,7 +280,7 @@ simulate_fact_learner_data <- function(
         rt               = reactionTime,
         correct          = correct,
         is_study         = FALSE,
-        true_alpha       = alpha,
+        true_phi         = phi,
         true_fact_offset = fact_offset,
         true_total_sof   = total_sof,
         true_tau         = tau,
@@ -328,14 +328,14 @@ simulate_fact_learner_data <- function(
 
 fit_learner_amle <- function(
     d_learner,
-    free_params = c("alpha", "tau", "s", "F", "ter"),
-    init   = list(alpha = 0.3, tau = -0.8, s = 0.1, F = 1, ter = 0.3),
+    free_params = c("phi", "tau", "s", "F", "ter"),
+    init   = list(phi = 0.3, tau = -0.8, s = 0.1, F = 1, ter = 0.3),
     max_iter    = 100,
     ll_epsilon  = 1e-5,
     rt_range    = c(0.1, 15),
     min_trials  = 3,
     bounds = list(
-      alpha = c(0, 1),
+      phi   = c(0, 1),
       tau   = c(-2, 0.5),
       s     = c(1e-2, 0.5),
       F     = c(0.1, 5),
@@ -403,8 +403,8 @@ fit_learner_amle <- function(
   params <- init
   nF     <- length(d_facts_list)
   
-  delta_alpha <- rep(0, nF)
-  names(delta_alpha) <- paste0("d_", names(d_facts_list))
+  delta_phi <- rep(0, nF)
+  names(delta_phi) <- paste0("d_", names(d_facts_list))
   
   uid <- d$user_id[1]
   
@@ -412,20 +412,20 @@ fit_learner_amle <- function(
   fits <- data.table(
     user_id   = uid,
     iteration = 0L,
-    delta_alpha = list(delta_alpha),
-    alpha = params$alpha,
+    delta_phi = list(delta_phi),
+    phi   = params$phi,
     tau   = params$tau,
     s     = params$s,
     lf    = params$F,
     ter   = params$ter,
     ll    = .objective_fun(d_facts_list,
-                           sof = params$alpha + delta_alpha,
+                           sof = params$phi + delta_phi,
                            tau = params$tau, s = params$s,
                            lf = params$F, ter = params$ter)
   )
   
   # --- AMLE loop --------------------------------------------------------------
-  alpha <- params$alpha
+  phi   <- params$phi
   tau   <- params$tau
   s     <- params$s
   lf    <- params$F
@@ -435,67 +435,67 @@ fit_learner_amle <- function(
     
     # ---- E-step: fact-level offsets ------------------------------------------
     fit_e <- optim(
-      par = delta_alpha,
+      par = delta_phi,
       fn = function(p) {
         -.objective_fun(d_facts_list,
-                        sof = alpha + p,
+                        sof = phi + p,
                         tau = tau, s = s, lf = lf, ter = ter)
       },
       method = "L-BFGS-B",
-      lower = rep(-alpha, nF),
+      lower = rep(-phi, nF),
       upper = rep(delta_upper, nF),
       control = list(maxit = 80, factr = 1e7, pgtol = 1e-3)
     )
-    
-    delta_alpha_new    <- fit_e$par
-    delta_alpha_damped <- .damp_and_shrink(delta_alpha, delta_alpha_new)
-    delta_alpha        <- delta_alpha_damped - mean(delta_alpha_damped)
+
+    delta_phi_new    <- fit_e$par
+    delta_phi_damped <- .damp_and_shrink(delta_phi, delta_phi_new)
+    delta_phi        <- delta_phi_damped - mean(delta_phi_damped)
     
     # ---- M-step: participant-level parameters --------------------------------
-    par_names <- intersect(free_params, c("alpha", "tau", "s", "F", "ter"))
-    
+    par_names <- intersect(free_params, c("phi", "tau", "s", "F", "ter"))
+
     if (length(par_names) > 0) {
       # Map param names to current values
-      par_current <- c(alpha = alpha, tau = tau, s = s, F = lf, ter = ter)
+      par_current <- c(phi = phi, tau = tau, s = s, F = lf, ter = ter)
       par0 <- par_current[par_names]
       lo   <- sapply(par_names, function(n) bounds[[n]][1])
       hi   <- sapply(par_names, function(n) bounds[[n]][2])
-      
+
       fit_m <- optim(
         par = par0,
         fn = function(p) {
-          a_  <- if ("alpha" %in% par_names) p[["alpha"]] else alpha
-          t_  <- if ("tau"   %in% par_names) p[["tau"]]   else tau
-          s_  <- if ("s"     %in% par_names) p[["s"]]     else s
-          f_  <- if ("F"     %in% par_names) p[["F"]]     else lf
-          te_ <- if ("ter"   %in% par_names) p[["ter"]]   else ter
+          a_  <- if ("phi" %in% par_names) p[["phi"]] else phi
+          t_  <- if ("tau" %in% par_names) p[["tau"]] else tau
+          s_  <- if ("s"   %in% par_names) p[["s"]]   else s
+          f_  <- if ("F"   %in% par_names) p[["F"]]   else lf
+          te_ <- if ("ter" %in% par_names) p[["ter"]] else ter
           -.objective_fun(d_facts_list,
-                          sof = a_ + delta_alpha,
+                          sof = a_ + delta_phi,
                           tau = t_, s = s_, lf = f_, ter = te_)
         },
         method = "L-BFGS-B",
         lower = lo, upper = hi,
         control = list(maxit = 80, factr = 1e7, pgtol = 1e-3)
       )
-      
+
       # Extract and damp
-      if ("alpha" %in% par_names) alpha <- .damp_and_shrink(alpha, fit_m$par[["alpha"]])
-      if ("tau"   %in% par_names) tau   <- .damp_and_shrink(tau,   fit_m$par[["tau"]])
-      if ("s"     %in% par_names) s     <- .damp_and_shrink(s,     fit_m$par[["s"]])
-      if ("F"     %in% par_names) lf    <- .damp_and_shrink(lf,    fit_m$par[["F"]])
-      if ("ter"   %in% par_names) ter   <- .damp_and_shrink(ter,   fit_m$par[["ter"]])
+      if ("phi" %in% par_names) phi <- .damp_and_shrink(phi, fit_m$par[["phi"]])
+      if ("tau" %in% par_names) tau <- .damp_and_shrink(tau, fit_m$par[["tau"]])
+      if ("s"   %in% par_names) s   <- .damp_and_shrink(s,   fit_m$par[["s"]])
+      if ("F"   %in% par_names) lf  <- .damp_and_shrink(lf,  fit_m$par[["F"]])
+      if ("ter" %in% par_names) ter <- .damp_and_shrink(ter, fit_m$par[["ter"]])
     }
     
     # ---- Record iteration ----------------------------------------------------
     ll_now <- .objective_fun(d_facts_list,
-                             sof = alpha + delta_alpha,
+                             sof = phi + delta_phi,
                              tau = tau, s = s, lf = lf, ter = ter)
-    
+
     fits <- rbind(fits, list(
-      user_id     = uid,
-      iteration   = as.integer(it),
-      delta_alpha = list(delta_alpha),
-      alpha = alpha,
+      user_id   = uid,
+      iteration = as.integer(it),
+      delta_phi = list(delta_phi),
+      phi   = phi,
       tau   = tau,
       s     = s,
       lf    = lf,
@@ -515,8 +515,8 @@ fit_learner_amle <- function(
 # RECOVERY HELPERS — parallel grid fitting with progress + ETA
 #
 # These replace the inline functions from the Rmd notebook.  Key improvements:
-#   1. delta_alpha extraction is correct (from list column, not attr())
-#      -> eliminates "Tried to assign NULL to column 'delta_alpha_est'" warnings
+#   1. delta_phi extraction is correct (from list column, not attr())
+#      -> eliminates "Tried to assign NULL to column 'delta_phi_est'" warnings
 #   2. Progress with ETA via the {progressr} package
 #   3. Multi-core via {future}/{furrr} (caller sets up the plan)
 # =============================================================================
@@ -529,9 +529,9 @@ fit_learner_amle <- function(
 #'
 #' Typical overhead vs single-start: ~30-50% longer, not 5× longer.
 #'
-#' Returns a one-row data.table with final parameter estimates + delta_alpha.
+#' Returns a one-row data.table with final parameter estimates + delta_phi.
 #' If keep_history = TRUE, returns ALL iterations from the best start.
-fit_one_learner <- function(d_learner, free_params = c("alpha", "tau", "s", "F", "ter"),
+fit_one_learner <- function(d_learner, free_params = c("phi", "tau", "s", "F", "ter"),
                             keep_history = FALSE, n_starts = 10,
                             screen_iter = 8, full_iter = 50) {
   
@@ -546,19 +546,19 @@ fit_one_learner <- function(d_learner, free_params = c("alpha", "tau", "s", "F",
   }
   
   # Default init (always included as start 1)
-  default_init <- list(alpha = 0.3, tau = -0.8, s = 0.1, F = 1, ter = 0.3)
+  default_init <- list(phi = 0.3, tau = -0.8, s = 0.1, F = 1, ter = 0.3)
   
   # Generate additional starting points with wider coverage via Latin-hypercube-
   # style stratified sampling: divide each parameter range into n_starts-1
   # equal strata and draw one random point per stratum, then shuffle across
   # parameters so strata are not aligned.
   make_random_init <- function() {
-    init <- list(alpha = 0.3, tau = -0.8, s = 0.1, F = 1, ter = 0.3)  # defaults
-    if ("alpha" %in% free_params) init$alpha <- runif(1, 0.15, 0.50)
-    if ("tau"   %in% free_params) init$tau   <- runif(1, -1.5, -0.3)
-    if ("s"     %in% free_params) init$s     <- runif(1, 0.03, 0.25)
-    if ("F"     %in% free_params) init$F     <- runif(1, 0.3,  2.5)
-    if ("ter"   %in% free_params) init$ter   <- runif(1, 0.1,  1.5)
+    init <- list(phi = 0.3, tau = -0.8, s = 0.1, F = 1, ter = 0.3)  # defaults
+    if ("phi" %in% free_params) init$phi   <- runif(1, 0.15, 0.50)
+    if ("tau" %in% free_params) init$tau   <- runif(1, -1.5, -0.3)
+    if ("s"   %in% free_params) init$s     <- runif(1, 0.03, 0.25)
+    if ("F"   %in% free_params) init$F     <- runif(1, 0.3,  2.5)
+    if ("ter" %in% free_params) init$ter   <- runif(1, 0.1,  1.5)
     init
   }
   
@@ -626,19 +626,19 @@ fit_one_learner <- function(d_learner, free_params = c("alpha", "tau", "s", "F",
   if (keep_history) {
     history <- copy(best_fit)
     history[, n_iter := n_iter]
-    history[, delta_alpha := NULL]
+    history[, delta_phi := NULL]
     return(history)
   }
-  
+
   # Last iteration = final estimates
   final <- best_fit[nrow(best_fit), ]
   final[, n_iter := n_iter]
-  
-  da <- final[["delta_alpha"]][[1]]
+
+  da <- final[["delta_phi"]][[1]]
   if (is.null(da)) da <- numeric(0)
-  
-  final[, delta_alpha := NULL]
-  final[, delta_alpha_est := list(list(da))]
+
+  final[, delta_phi := NULL]
+  final[, delta_phi_est := list(list(da))]
   
   final
 }
@@ -661,7 +661,7 @@ fit_one_learner <- function(d_learner, free_params = c("alpha", "tau", "s", "F",
 #'     progressr::handlers("cli")   # or "txtprogressbar"
 #'     progressr::handlers(global = TRUE)
 run_recovery_grid <- function(sim_full, n_reps, n_facts,
-                              free_params = c("alpha", "tau", "s", "F", "ter"),
+                              free_params = c("phi", "tau", "s", "F", "ter"),
                               seed_sample = 42,
                               batch_size = NULL) {
   
@@ -756,7 +756,7 @@ greedy_select_params <- function(
     sim_full,
     n_reps     = 10,
     n_facts    = 15,
-    all_params = c("alpha", "tau", "s", "F", "ter"),
+    all_params = c("phi", "tau", "s", "F", "ter"),
     seed_sample = 42,
     keep_history = FALSE
 ) {

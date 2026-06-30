@@ -1,7 +1,7 @@
 Simulation: parameter recovery as a function of available data
 ================
 Thomas Wilschut
-Last updated: 2026-06-03
+Last updated: 2026-06-30
 
 - [Setup](#setup)
 - [Simulate a larger dataset for
@@ -10,8 +10,9 @@ Last updated: 2026-06-03
 - [Load results (if saved earlier)](#load-results-if-saved-earlier)
 - [Merge true parameters](#merge-true-parameters)
 - [Recovery (Figure 5)](#recovery-figure-5)
-- [Fact-level Δα recovery (Figure 6)](#fact-level-δα-recovery-figure-6)
-- [Session info](#session-info)
+- [Fact-level Δφ recovery (Figure 6)](#fact-level-δφ-recovery-figure-6)
+- [Correlations of the true
+  parameters](#correlations-of-the-true-parameters)
 
 This markdown file is can be used to reproduce the results reported in
 the paper: Idiographic Memory Modelling in ACT-R using Alternating
@@ -112,12 +113,18 @@ saveRDS(fits_vary_facts, here::here("data", "processed", "fits", "results_recove
 fits_vary_reps  <- readRDS(here::here("data", "processed", "fits", "results_recovery_vary_reps.rds"))
 fits_vary_facts <- readRDS(here::here("data", "processed", "fits", "results_recovery_vary_facts.rds"))
 
+# Backward compatibility: rename old column names from pre-phi cached fits
+if ("alpha"           %in% names(fits_vary_reps))  setnames(fits_vary_reps,  "alpha",           "phi")
+if ("delta_alpha_est" %in% names(fits_vary_reps))  setnames(fits_vary_reps,  "delta_alpha_est", "delta_phi_est")
+if ("alpha"           %in% names(fits_vary_facts)) setnames(fits_vary_facts, "alpha",           "phi")
+if ("delta_alpha_est" %in% names(fits_vary_facts)) setnames(fits_vary_facts, "delta_alpha_est", "delta_phi_est")
+
 names(fits_vary_reps)
 ```
 
-    ##  [1] "n_repetitions"   "n_facts_grid"    "user_id"         "iteration"      
-    ##  [5] "alpha"           "tau"             "s"               "lf"             
-    ##  [9] "ter"             "ll"              "n_iter"          "delta_alpha_est"
+    ##  [1] "n_repetitions" "n_facts_grid"  "user_id"       "iteration"    
+    ##  [5] "phi"           "tau"           "s"             "lf"           
+    ##  [9] "ter"           "ll"            "n_iter"        "delta_phi_est"
 
 # Merge true parameters
 
@@ -128,11 +135,11 @@ from both grids.
 
 ``` r
 true_params <- sim_test[, .(
-  true_alpha = true_alpha[1],
-  true_tau   = true_tau[1],
-  true_s     = true_s[1],
-  true_F     = true_lf[1],
-  true_ter   = true_ter[1]
+  true_phi = true_phi[1],
+  true_tau = true_tau[1],
+  true_s   = true_s[1],
+  true_F   = true_lf[1],
+  true_ter = true_ter[1]
 ), by = user_id]
 
 recovery_reps  <- merge(fits_vary_reps,  true_params, by = "user_id")
@@ -167,22 +174,22 @@ param_linetypes <- setNames(c("solid", "dashed", "dotdash", "longdash", "twodash
 subset_10 <- recovery_reps[n_repetitions == 10]
 
 plot_df <- subset_10 %>%
-  pivot_longer(cols = c(alpha, tau, s, lf, ter),
+  pivot_longer(cols = c(phi, tau, s, lf, ter),
                names_to = "param", values_to = "estimate") %>%
   mutate(
     true_value = case_when(
-      param == "alpha" ~ true_alpha,
-      param == "tau"   ~ true_tau,
-      param == "s"     ~ true_s,
-      param == "lf"    ~ true_F,
-      param == "ter"   ~ true_ter
+      param == "phi" ~ true_phi,
+      param == "tau" ~ true_tau,
+      param == "s"   ~ true_s,
+      param == "lf"  ~ true_F,
+      param == "ter" ~ true_ter
     ),
     param_label = recode(param,
-      "alpha" = "Speed of Forgetting",
-      "tau"   = "Retrieval threshold",
-      "s"     = "Activation noise",
-      "lf"    = "Latency factor",
-      "ter"   = "Non-retrieval time"
+      "phi" = "Speed of Forgetting",
+      "tau" = "Retrieval threshold",
+      "s"   = "Activation noise",
+      "lf"  = "Latency factor",
+      "ter" = "Non-retrieval time"
     ),
     param_label = factor(param_label, levels = param_levels)
   )
@@ -214,22 +221,22 @@ make_cor_summary <- function(df, group_var) {
   df %>%
     group_by(!!sym(group_var)) %>%
     summarise(
-      cor_alpha = cor(true_alpha, alpha, use = "complete.obs"),
-      cor_tau   = cor(true_tau,   tau,   use = "complete.obs"),
-      cor_s     = cor(true_s,     s,     use = "complete.obs"),
-      cor_F     = cor(true_F,     lf,    use = "complete.obs"),
-      cor_ter   = cor(true_ter,   ter,   use = "complete.obs"),
+      cor_phi = cor(true_phi, phi, use = "complete.obs"),
+      cor_tau = cor(true_tau, tau, use = "complete.obs"),
+      cor_s   = cor(true_s,   s,   use = "complete.obs"),
+      cor_F   = cor(true_F,   lf,  use = "complete.obs"),
+      cor_ter = cor(true_ter, ter, use = "complete.obs"),
       .groups = "drop"
     ) %>%
     pivot_longer(starts_with("cor_"), names_to = "parameter", values_to = "correlation") %>%
     mutate(
       parameter   = sub("cor_", "", parameter),
       param_label = recode(parameter,
-        "alpha" = "Speed of Forgetting",
-        "tau"   = "Retrieval threshold",
-        "s"     = "Activation noise",
-        "F"     = "Latency factor",
-        "ter"   = "Non-retrieval time"
+        "phi" = "Speed of Forgetting",
+        "tau" = "Retrieval threshold",
+        "s"   = "Activation noise",
+        "F"   = "Latency factor",
+        "ter" = "Non-retrieval time"
       ),
       param_label = factor(param_label, levels = param_levels)
     )
@@ -238,11 +245,11 @@ make_cor_summary <- function(df, group_var) {
 make_error_summary <- function(df, group_var) {
   df %>%
     mutate(
-      alpha_error = abs(true_alpha - alpha),
-      tau_error   = abs(true_tau   - tau),
-      s_error     = abs(true_s     - s),
-      F_error     = abs(true_F     - lf),
-      ter_error   = abs(true_ter   - ter)
+      phi_error = abs(true_phi - phi),
+      tau_error = abs(true_tau - tau),
+      s_error   = abs(true_s   - s),
+      F_error   = abs(true_F   - lf),
+      ter_error = abs(true_ter - ter)
     ) %>%
     pivot_longer(ends_with("_error"), names_to = "parameter", values_to = "abs_error") %>%
     group_by(parameter, !!sym(group_var)) %>%
@@ -251,11 +258,11 @@ make_error_summary <- function(df, group_var) {
               .groups = "drop") %>%
     mutate(
       param_label = recode(parameter,
-        "alpha_error" = "Speed of Forgetting",
-        "tau_error"   = "Retrieval threshold",
-        "s_error"     = "Activation noise",
-        "F_error"     = "Latency factor",
-        "ter_error"   = "Non-retrieval time"
+        "phi_error" = "Speed of Forgetting",
+        "tau_error" = "Retrieval threshold",
+        "s_error"   = "Activation noise",
+        "F_error"   = "Latency factor",
+        "ter_error" = "Non-retrieval time"
       ),
       param_label = factor(param_label, levels = param_levels)
     )
@@ -286,7 +293,7 @@ plot_cor <- function(df, x_var, x_lab, highlight_x = NULL) {
     scales_shared +
     plottheme +
     theme(legend.position = "none") +
-    labs(x = x_lab, y = "Recovery (correlation r)")
+    labs(x = x_lab, y = "Recovery (Preason's r)")
 }
 
 plot_error <- function(df, x_var, x_lab, highlight_x = NULL) {
@@ -320,7 +327,7 @@ p_corr_facts  <- plot_cor(cor_facts,  "n_facts_grid", "N facts (10 repetitions)"
 p_error_facts <- plot_error(error_facts, "n_facts_grid", "N facts (10 repetitions)", highlight_x = 15)
 
 # ── Panel F: Pairwise correlations ────────────────────────────────────────────
-pairs_df <- subset_10[, .(alpha, tau, s, lf, ter)]
+pairs_df <- subset_10[, .(phi, tau, s, lf, ter)]
 
 
 pairs_plot <- ggpairs(
@@ -358,91 +365,93 @@ pairs_grob <- GGally::ggmatrix_gtable(pairs_plot)
     ## `geom_smooth()` using formula = 'y ~ x'
 
 ``` r
+p_corr_reps <- p_corr_reps + theme(legend.position = "none")
+p_error_reps <- p_error_reps + theme(legend.position = "none")
+p_corr_facts <- p_corr_facts + theme(legend.position = "none")
+p_error_facts <- p_error_facts + theme(legend.position = "bottom", # remeove legend title:
+                                       legend.title = element_blank()
+                                       )
+
 combined <-
-  (p_recovery) /
   ((p_corr_reps + p_error_reps) / (p_corr_facts + p_error_facts) |
      wrap_elements(pairs_grob)) +
-  plot_layout(heights = c(0.8, 2), widths = c(1.8, 1)) +
+  plot_layout(widths = c(1, 1)) +
   plot_annotation(tag_levels = "A") &
   theme(plot.tag = element_text(face = "bold", size = 14))
 
 combined
 ```
 
-    ## `geom_smooth()` using formula = 'y ~ x'
-
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/03_parameter_recovery_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/03_parameter_recovery_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 # Paper Figure 5: recovery of participant-level parameters as a function of available data
-ggsave(here::here("output", "recovery_combined.png"), combined, width = 11, height = 9)
+ggsave(here::here("output", "recovery_combined.png"), combined, width = 11, height = 6.5)
 ```
 
-    ## `geom_smooth()` using formula = 'y ~ x'
-
-# Fact-level Δα recovery (Figure 6)
+# Fact-level Δφ recovery (Figure 6)
 
 Besides the person-level parameters, the model estimates a Speed of
-Forgetting offset (Δα) for each individual fact. Here we assess how well
+Forgetting offset (Δφ) for each individual fact. Here we assess how well
 those fact-level offsets are recovered (Figure 6 in the paper): panel A
 is a true-vs-recovered scatter at 10 repetitions, and panels B and C
 show recovery (correlation) and mean absolute error as a function of the
 number of repetitions per fact. The recovered offsets are stored as a
-named list-column in the fits, so `get_delta_alpha()` unpacks them into
-a long table keyed by fact before merging on the true values.
+named list-column in the fits, so `get_delta_phi()` unpacks them into a
+long table keyed by fact before merging on the true values.
 
 ``` r
 # Extract true fact offsets
-true_offsets <- sim_test[, .(true_delta_alpha = true_fact_offset[1]),
+true_offsets <- sim_test[, .(true_delta_phi = true_fact_offset[1]),
                          by = .(user_id, fact_id)]
 
 # Extract recovered offsets from fits
-get_delta_alpha <- function(fits_df) {
+get_delta_phi <- function(fits_df) {
   fits_df[, {
-    da <- delta_alpha_est[[1]]
+    da <- delta_phi_est[[1]]
     if (is.null(da) || length(da) == 0) {
       NULL
     } else {
       fact_ids <- as.integer(sub("^d_", "", names(da)))
       .(fact_id = fact_ids,
-        delta_alpha_est = as.numeric(da))
+        delta_phi_est = as.numeric(da))
     }
   }, by = .(user_id, n_repetitions)]
 }
 
-fact_recovery <- get_delta_alpha(fits_vary_reps) %>% filter(n_repetitions < 20)  
+fact_recovery <- get_delta_phi(fits_vary_reps) %>% filter(n_repetitions < 20)
 fact_recovery <- merge(fact_recovery, true_offsets, by = c("user_id", "fact_id"))
 
 # (A) Scatter at 10 reps
 fact_10 <- fact_recovery[n_repetitions == 10]
-r_val <- cor(fact_10$true_delta_alpha, fact_10$delta_alpha_est, use = "complete.obs")
+r_val <- cor(fact_10$true_delta_phi, fact_10$delta_phi_est, use = "complete.obs")
 
-p_fact_scatter <- ggplot(fact_10, aes(x = true_delta_alpha, y = delta_alpha_est)) +
+p_fact_scatter <- ggplot(fact_10, aes(x = true_delta_phi, y = delta_phi_est)) +
   geom_point(alpha = 0.7, color = pal_aaas()(1)) +
   geom_smooth(method = "lm", color = "black", se = TRUE) +
   annotate("text", x = -Inf, y = Inf,
            label = sprintf("r = %.2f", r_val),
            hjust = -0.1, vjust = 2, size = 4) +
   coord_cartesian(clip = "off") +
-  labs(x = expression("True "*Delta*alpha),
-       y = expression("Recovered "*Delta*alpha)) +
+  labs(x = expression("True "*Delta*phi),
+       y = expression("Recovered "*Delta*phi)) +
   plottheme
 
 # (B) Correlation over reps
-fact_corr <- fact_recovery[, .(corr = cor(true_delta_alpha, delta_alpha_est, use = "complete.obs")),
+fact_corr <- fact_recovery[, .(corr = cor(true_delta_phi, delta_phi_est, use = "complete.obs")),
                            by = n_repetitions]
 
 p_fact_corr <- ggplot(fact_corr, aes(x = factor(n_repetitions), y = corr, group = 1)) +
   geom_line(linewidth = 1, color = pal_aaas()(1)) +
   geom_point(size = 2, color = pal_aaas()(1)) +
   scale_y_continuous(limits = c(0, 1)) +
-  labs(x = "Repetitions per fact", y = "Recovery (correlation r)") +
+  labs(x = "Repetitions per fact", y = "Recovery (Preason's r)") +
   plottheme 
 
 # (C) Error over reps
 fact_error <- fact_recovery[, .(
-  mean_error = mean(abs(true_delta_alpha - delta_alpha_est), na.rm = TRUE),
-  se_error = sd(abs(true_delta_alpha - delta_alpha_est), na.rm = TRUE) / sqrt(.N)
+  mean_error = mean(abs(true_delta_phi - delta_phi_est), na.rm = TRUE),
+  se_error = sd(abs(true_delta_phi - delta_phi_est), na.rm = TRUE) / sqrt(.N)
 ), by = n_repetitions]
 
 p_fact_error <- ggplot(fact_error, aes(x = factor(n_repetitions), y = mean_error, group = 1)) +
@@ -462,16 +471,52 @@ p_fact_error <- ggplot(fact_error, aes(x = factor(n_repetitions), y = mean_error
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/03_parameter_recovery_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/03_parameter_recovery_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
-# Paper Figure 6: recovery of fact-level Speed of Forgetting offsets (delta-alpha)
+# Paper Figure 6: recovery of fact-level Speed of Forgetting offsets (delta-phi)
 ggsave(here::here("output", "fact_level_recovery.png"), width = 10, height = 3.5)
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-# Session info
+# Correlations of the true parameters
+
+``` r
+true_param_pairs <- sim_test[, .(true_phi, true_tau, true_s, true_lf, true_ter)]
+pairs_true <- ggpairs(
+  as.data.frame(true_param_pairs),
+  upper = list(continuous = function(data, mapping, ...) {
+    ggally_cor(data, mapping, ...)
+  }),
+  lower = list(continuous = function(data, mapping, ...) {
+    ggplot(data, mapping) +
+      geom_point(alpha = 0.3) +
+      geom_smooth(method = "lm", se = TRUE, color = "black")
+  }),
+  columnLabels = c("Speed of\nForgetting", "Retrieval\nthreshold",
+                 "Activation\nnoise", "Latency\nfactor", "Non-retrieval\ntime")
+) +
+  plottheme +
+  theme(strip.background = element_rect(fill = "grey85", colour = "grey60"),
+        strip.text       = element_text(size = 8),
+        axis.text.x      = element_text(angle = 90, hjust = 1))
+pairs_true
+```
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/03_parameter_recovery_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+\# Session info
 
 ``` r
 sessionInfo()

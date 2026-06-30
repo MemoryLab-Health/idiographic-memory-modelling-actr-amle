@@ -25,7 +25,7 @@ actr-amle/
 │   └── processed/            Shipped: prepared data + cached model fits
 │       ├── hake2024.csv
 │       ├── AMLE_fit.csv
-│       ├── AMLE_delta_alpha.csv
+│       ├── AMLE_delta_phi.csv
 │       └── fits/             Cached `.rds` results for the expensive steps
 ├── simulation/
 │   └── scripts/
@@ -62,7 +62,7 @@ make simulation        # runs 01 -> 02 -> 03
 The processed data and cached fits are shipped, so the model-fitting and classification steps run without the raw source file:
 
 ```bash
-make fit               # 05: fit the AMLE model -> data/processed/AMLE_fit.csv
+make fit               # 05: fit the AMLE model -> data/processed/AMLE_fit.csv, AMLE_delta_phi.csv
 make classify          # 06: parameter contributions to MCI vs HC classification
 ```
 

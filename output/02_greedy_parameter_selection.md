@@ -1,7 +1,7 @@
 Simulation: greedy forward parameter selection
 ================
 Thomas Wilschut
-Last updated: 2026-06-03
+Last updated: 2026-06-30
 
 - [Setup](#setup)
 - [Simulate response data](#simulate-response-data)
@@ -65,7 +65,7 @@ sim <- simulate_fact_learner_data(
 # Greedy forward parameter selection (C++ likelihood)
 
 The greedy procedure starts with no free participant-level parameters
-(only fact-level offsets Δα are estimated). At each step it adds the
+(only fact-level offsets Δφ are estimated). At each step it adds the
 candidate parameter that produces the largest AIC improvement, fitting
 all learners in parallel using the compiled C++ likelihood from
 `actr_ll.cpp`.
@@ -75,7 +75,7 @@ greedy_results <- greedy_select_params(
   sim_full   = sim,
   n_reps     = 10,
   n_facts    = 15,
-  all_params = c("alpha", "tau", "s", "F", "ter")
+  all_params = c("phi", "tau", "s", "F", "ter")
 )
 
 # This step is expensive (it refits every learner at every candidate parameter),
@@ -97,16 +97,23 @@ freed.
 
 ``` r
 greedy_results <- readRDS(here::here("data", "processed", "fits", "results_greedy_selection.rds"))
-
 greedy_fits    <- greedy_results$learner_fits
 greedy_summary <- greedy_results$summary
 
+# Backward compatibility: rename old column names from pre-phi cached fits
+greedy_fits    <- as.data.table(greedy_fits)
+greedy_summary <- as.data.table(greedy_summary)
+if ("alpha" %in% names(greedy_fits))    setnames(greedy_fits,    "alpha", "phi")
+if ("alpha" %in% names(greedy_summary)) setnames(greedy_summary, "alpha", "phi")
+if ("param_added" %in% names(greedy_fits))    greedy_fits[param_added    == "alpha", param_added := "phi"]
+if ("param_added" %in% names(greedy_summary)) greedy_summary[param_added == "alpha", param_added := "phi"]
+
 true_params <- sim[is_study == FALSE, .(
-  true_alpha = true_alpha[1],
-  true_tau   = true_tau[1],
-  true_s     = true_s[1],
-  true_F     = true_lf[1],
-  true_ter   = true_ter[1]
+  true_phi = true_phi[1],
+  true_tau = true_tau[1],
+  true_s   = true_s[1],
+  true_F   = true_lf[1],
+  true_ter = true_ter[1]
 ), by = user_id]
 
 greedy_fits_m <- merge(as.data.frame(greedy_fits), as.data.frame(true_params), by = "user_id")
@@ -115,19 +122,17 @@ selected_models <- as.data.frame(greedy_summary[selected == TRUE][order(step)])
 selection_order <- selected_models$param_added
 
 param_info <- data.frame(
-  free_name = c("alpha", "tau", "s", "F", "ter"),
-  fit_col   = c("alpha", "tau", "s", "lf", "ter"),
-  true_col  = c("true_alpha", "true_tau", "true_s", "true_F", "true_ter"),
+  free_name = c("phi", "tau", "s", "F", "ter"),
+  fit_col   = c("phi", "tau", "s", "lf", "ter"),
+  true_col  = c("true_phi", "true_tau", "true_s", "true_F", "true_ter"),
   label     = c("Speed of Forgetting", "Retrieval threshold",
                 "Activation noise", "Latency factor", "Non-retrieval time"),
   stringsAsFactors = FALSE
 )
 
-# Full-name step labels — defined before the loop so plot_df uses them
 name_lookup <- setNames(param_info$label, param_info$free_name)
-slabels     <- paste0("Step ", selected_models$step, ": + ", name_lookup[selected_models$param_added])
-
-col_order <- param_info$label[match(selection_order, param_info$free_name)]
+slabels     <- paste0("Step ", selected_models$step, ": winner = ", name_lookup[selected_models$param_added])
+col_order   <- param_info$label[match(selection_order, param_info$free_name)]
 
 # Build plot data
 plot_rows <- list()
@@ -162,7 +167,6 @@ for (s in seq_along(slabels)) {
     )
   }
 }
-
 plot_df <- do.call(rbind, plot_rows)
 
 # Filter outliers
@@ -175,55 +179,67 @@ corr_labels <- plot_df %>%
   mutate(r_lab = paste0("r = ", format(round(r, 2), nsmall = 2)))
 
 # Factor ordering
-plot_df$step_label     <- factor(plot_df$step_label, levels = slabels)
-plot_df$param          <- factor(plot_df$param, levels = col_order)
-corr_labels$step_label <- factor(corr_labels$step_label, levels = slabels)
-corr_labels$param      <- factor(corr_labels$param, levels = col_order)
+plot_df$param     <- factor(plot_df$param, levels = col_order)
+corr_labels$param <- factor(corr_labels$param, levels = col_order)
 
-# Define per-row strip styling: blank for step row, grey for param row
-strip <- strip_themed(
-  background_x = c(
-    rep(list(element_blank()), 25),                                 # one per panel for step row
-    rep(list(element_rect(fill = "grey85", colour = "grey60")), 25) # one per panel for param row
-  )
-)
+# Build one row of panels per step, each with its own free scales and title
+row_plots <- list()
+for (s in seq_along(slabels)) {
+  df_s   <- plot_df[plot_df$step == s, ]
+  corr_s <- corr_labels[corr_labels$step_label == slabels[s], ]
 
-p_grid <- ggplot(plot_df, aes(x = true_value, y = estimate)) +
-  geom_point(aes(color = status), alpha = 0.6, size = 1.5) +
-  scale_color_manual(
-    values = c("selected" = "#0571b0", "candidate" = "grey60"),
-    labels = c("selected" = "Selected", "candidate" = "Not selected"),
-    name = ""
-  ) +
-  geom_smooth(method = "lm", se = TRUE, aes(linetype = status),
-              color = "black", linewidth = 0.6, show.legend = FALSE) +
-  scale_linetype_manual(values = c("selected" = "solid", "candidate" = "dashed")) +
-  geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "grey40") +
-  geom_text(data = corr_labels,
-            aes(x = -Inf, y = Inf, label = r_lab, color = status),
-            inherit.aes = FALSE, hjust = -0.1, vjust = 1.5, size = 3.5,
-            show.legend = FALSE) +
-  facet_wrap2(step_label ~ param, scales = "free", ncol = 5, strip = strip) +
-  labs(x = "True value", y = "Recovered value") +
-  plottheme +
-  theme(
-    strip.text      = element_text(size = 8),
-    panel.spacing   = unit(0.3, "lines"),
-    legend.position = "bottom"
-  )
+  row_plots[[s]] <- ggplot(df_s, aes(x = true_value, y = estimate)) +
+    geom_point(aes(color = status), alpha = 0.6, size = 1.5) +
+    scale_color_manual(
+      values = c("selected" = "#0571b0", "candidate" = "grey60"),
+      labels = c("selected" = "Selected", "candidate" = "Not selected"),
+      limits = c("candidate", "selected"),
+      drop   = FALSE,
+      name   = ""
+    ) +
+    geom_smooth(method = "lm", se = TRUE, aes(linetype = status),
+                color = "black", linewidth = 0.6, show.legend = FALSE) +
+    scale_linetype_manual(values = c("selected" = "solid", "candidate" = "dashed")) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "grey40") +
+    geom_text(data = corr_s,
+              aes(x = -Inf, y = Inf, label = r_lab, color = status),
+              inherit.aes = FALSE, hjust = -0.1, vjust = 1.5, size = 3.5,
+              show.legend = FALSE) +
+    facet_wrap(~ param, scales = "free", nrow = 1) +
+    guides(color = if (s == 1) "legend" else "none") +
+    labs(title = slabels[s], x = "True value", y = "Recovered value") +
+    plottheme +
+    theme(
+      strip.text  = element_text(size = 8),
+      plot.title  = element_text(face = "bold", size = 10, hjust = 0),
+      panel.spacing = unit(0.3, "lines")
+    )
+}
+
+p_grid <- wrap_plots(row_plots, ncol = 1) +
+  plot_layout(guides = "collect", axis_titles = "collect") &
+  theme(legend.position = "bottom")
 
 p_grid
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/02_greedy_parameter_selection_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/02_greedy_parameter_selection_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 ``` r
 # Paper Figure 4: parameter recovery at each step of the greedy forward selection
 ggsave(here::here("output", "greedy_recovery_grid.png"), p_grid, width = 10, height = 10)
 ```
 
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
     ## `geom_smooth()` using formula = 'y ~ x'
 
 # AIC plot (Figure 3)
@@ -236,26 +252,29 @@ applied to the y-axis so that both the very large step-1 values and the
 small differences at later steps remain legible in a single panel.
 
 ``` r
-greedy_summary <- greedy_results$summary
-
+greedy_summary <- as.data.table(greedy_results$summary)
+if ("param_added" %in% names(greedy_summary)) greedy_summary[param_added == "alpha", param_added := "phi"]
 param_display <- c(
-  alpha = "Speed of Forgetting",
-  tau   = "Retrieval threshold",
-  s     = "Activation noise",
-  F     = "Latency factor",
-  ter   = "Non-retrieval time"
+  phi = "Speed of Forgetting",
+  tau = "Retrieval threshold",
+  s   = "Activation noise",
+  F   = "Latency factor",
+  ter = "Non-retrieval time"
 )
 
 greedy_summary[, param_label := param_display[param_added]]
-selection_path <- greedy_summary[selected == TRUE][order(step)]
-selection_path[, param_label := param_display[param_added]]
 
-# Match aaas colour order to the other plots
-param_cols <- setNames(
-  pal_aaas()(5),
-  c("Speed of Forgetting", "Retrieval threshold", "Activation noise",
-    "Latency factor", "Non-retrieval time")
-)
+# Fix legend order to phi, tau, s, F, ter
+param_order <- param_display[c("phi", "tau", "s", "F", "ter")]
+greedy_summary[, param_label := factor(param_label, levels = param_order)]
+
+selection_path <- greedy_summary[selected == TRUE][order(step)]
+selection_path[, win_label := sprintf("Winner: %s\nAIC = %.0f", as.character(param_label), total_aic)]
+selection_path[, lbl_x     := step + ifelse(step == max(step), 0.5, 0.08)]
+selection_path[, lbl_hjust := ifelse(step == max(step), 1, 0)]
+selection_path[, lbl_y     := total_aic + fifelse(step == 4, 400,
+                                          fifelse(step == 5, 1100, 200))]
+param_cols <- setNames(pal_aaas()(5), param_order)
 
 seg_data <- greedy_summary[selected == FALSE]
 seg_data[, y_from := selection_path$total_aic[match(step - 1, selection_path$step)]]
@@ -285,21 +304,25 @@ p_aic <- ggplot() +
   geom_point(data = selection_path,
              aes(x = step, y = total_aic, color = param_label),
              size = 5, shape = 17) +
+  geom_text(data = selection_path,
+            aes(x = lbl_x, y = lbl_y, label = win_label, hjust = lbl_hjust),
+            vjust = 0, size = 3.5, lineheight = 0.95, color = "black") +
   scale_color_manual(name = "Parameter", values = param_cols) +
   scale_y_continuous(trans = sqrt_trans, breaks = aic_breaks) +
-  scale_x_continuous(breaks = 1:5) +
+  scale_x_continuous(breaks = 1:5, expand = expansion(mult = c(0.05, 0.18))) +
   labs(x = "Step (parameter added)", y = "AIC") +
   theme_bw() +
-  theme(legend.position = "right")
-
+  theme(legend.position = c(0.98, 0.98),
+        legend.justification = c("right", "top"),
+        legend.background = element_rect(fill = alpha("white", 0.7), color = NA))
 p_aic
 ```
 
-![](/Users/thomaswilschut/Desktop/idiographic-memory-modeling-actr-amle/output/02_greedy_parameter_selection_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/02_greedy_parameter_selection_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ``` r
 # Paper Figure 3: greedy forward parameter selection based on AIC
-ggsave(here::here("output", "greedy_selection_aic.png"), p_aic, width = 10, height = 6)
+ggsave(here::here("output", "greedy_selection_aic.png"), p_aic, width = 8, height = 6)
 ```
 
 # Session info

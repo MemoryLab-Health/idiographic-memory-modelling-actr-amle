@@ -1,7 +1,7 @@
 Example application: parameter contributions to MCI vs HC classification
 ================
 Thomas Wilschut
-Last updated: 2026-06-12
+Last updated: 2026-06-30
 
 - [Setup and helpers](#setup-and-helpers)
   - [Helpers](#helpers)
@@ -35,14 +35,14 @@ palette) that are reused across the plots below.
 
 ``` r
 # ── Shared constants ──────────────────────────────────────────────────────────
-PARAM_COL <- c(alpha = "alpha", tau = "tau", s = "s", F = "lf", ter = "ter")
+PARAM_COL <- c(phi = "phi", tau = "tau", s = "s", F = "lf", ter = "ter")
 
 param_display <- c(
-  alpha = "Speed of Forgetting",
-  tau   = "Retrieval threshold",
-  s     = "Activation noise",
-  F     = "Latency factor",
-  ter   = "Non-retrieval time"
+  phi = "Speed of Forgetting",
+  tau = "Retrieval threshold",
+  s   = "Activation noise",
+  F   = "Latency factor",
+  ter = "Non-retrieval time"
 )
 
 param_cols <- setNames(
@@ -173,7 +173,7 @@ person_means <- function(fits_dt, free_params, clinical_df) {
 
 # ── Greedy forward selection (person-average AUC criterion) ───────────────────
 greedy_select_auc <- function(d_filtered,
-                              all_params = c("alpha", "tau", "s", "F", "ter"),
+                              all_params = c("phi", "tau", "s", "F", "ter"),
                               n_boot     = 500,
                               full_iter  = 100) {
 
@@ -266,11 +266,19 @@ saveRDS(greedy_auc, here::here("data", "processed", "fits", "greedy_auc_results.
 This plots the person-average selection path (Figure 10A): the solid
 line is the selected path, faint points are the non-selected candidates
 at each step, and the shaded band is the 95% bootstrap CI on the
-selected path. F is selected first and α second, after which adding
+selected path. F is selected first and φ second, after which adding
 further parameters does not improve classification.
 
 ``` r
 greedy_auc <- readRDS(here::here("data", "processed", "fits", "greedy_auc_results.rds"))
+
+# Backward compatibility: rename alpha -> phi in cached results
+if ("alpha" %in% names(greedy_auc$learner_fits)) setnames(greedy_auc$learner_fits, "alpha", "phi")
+if ("param_added" %in% names(greedy_auc$learner_fits)) greedy_auc$learner_fits[param_added == "alpha", param_added := "phi"]
+if ("param_added" %in% names(greedy_auc$summary))      greedy_auc$summary[param_added == "alpha", param_added := "phi"]
+if ("free_params" %in% names(greedy_auc$summary)) {
+  greedy_auc$summary[, free_params := lapply(free_params, function(fp) replace(fp, fp == "alpha", "phi"))]
+}
 
 summary_dt <- copy(greedy_auc$summary)
 summary_dt[, param_label := param_display[param_added]]
@@ -369,14 +377,14 @@ seg_single[, y_from := selection_single$auc_corrected[
 ## Greedy selection: single-session criterion (steps 3–5)
 
 The selection path diverges from step 3 onward. Since steps 1–2 selected
-the same parameters (F, then alpha) under both criteria, we reuse those
+the same parameters (F, then phi) under both criteria, we reuse those
 fits and rerun only steps 3–5 with single-session AUC as the selection
 criterion.
 
 ``` r
 # ── Greedy selection from a given step (reusing earlier fits) ──────────────────
 greedy_select_auc_from_step <- function(d_filtered,
-                                        already_selected = c("F", "alpha"),
+                                        already_selected = c("F", "phi"),
                                         remaining_params = c("tau", "s", "ter"),
                                         start_step       = 3,
                                         n_boot           = 500,
@@ -467,7 +475,7 @@ greedy_select_auc_from_step <- function(d_filtered,
 ``` r
 new_steps <- greedy_select_auc_from_step(
   d_filtered,
-  already_selected = c("F", "alpha"),
+  already_selected = c("F", "phi"),
   remaining_params = c("tau", "s", "ter"),
   start_step       = 3,
   n_boot           = 500
@@ -514,6 +522,14 @@ saveRDS(greedy_auc_single, here::here("data", "processed", "fits", "greedy_auc_r
 
 ``` r
 greedy_auc_single <- readRDS(here::here("data", "processed", "fits", "greedy_auc_results_single.rds"))
+
+# Backward compatibility: rename alpha -> phi in cached results
+if ("alpha" %in% names(greedy_auc_single$learner_fits)) setnames(greedy_auc_single$learner_fits, "alpha", "phi")
+if ("param_added" %in% names(greedy_auc_single$learner_fits)) greedy_auc_single$learner_fits[param_added == "alpha", param_added := "phi"]
+if ("param_added" %in% names(greedy_auc_single$summary))      greedy_auc_single$summary[param_added == "alpha", param_added := "phi"]
+if ("free_params" %in% names(greedy_auc_single$summary)) {
+  greedy_auc_single$summary[, free_params := lapply(free_params, function(fp) replace(fp, fp == "alpha", "phi"))]
+}
 
 # ── Panel B: single-session selection path ────────────────────────────────────
 summary_single_b <- copy(greedy_auc_single$summary)
@@ -615,7 +631,7 @@ greedy_auc$summary[selected == TRUE][order(step),
     ##     step param_added auc_corrected auc_lo auc_hi
     ##    <int>      <char>         <num>  <num>  <num>
     ## 1:     1           F         0.917  0.917  0.917
-    ## 2:     2       alpha         0.944  0.934  0.949
+    ## 2:     2         phi         0.944  0.934  0.949
     ## 3:     3         tau         0.930  0.893  0.941
     ## 4:     4         ter         0.926  0.867  0.948
     ## 5:     5           s         0.926  0.859  0.958
@@ -638,11 +654,11 @@ greedy_auc$summary[order(step, -auc_corrected),
     ##      step param_added selected auc_corrected auc_lo auc_hi
     ##     <int>      <char>   <lgcl>         <num>  <num>  <num>
     ##  1:     1           F     TRUE         0.917  0.917  0.917
-    ##  2:     1       alpha    FALSE         0.907  0.907  0.907
+    ##  2:     1         phi    FALSE         0.907  0.907  0.907
     ##  3:     1         ter    FALSE         0.877  0.877  0.877
     ##  4:     1           s    FALSE         0.756  0.756  0.756
     ##  5:     1         tau    FALSE         0.532  0.532  0.532
-    ##  6:     2       alpha     TRUE         0.944  0.934  0.949
+    ##  6:     2         phi     TRUE         0.944  0.934  0.949
     ##  7:     2         ter    FALSE         0.912  0.889  0.921
     ##  8:     2         tau    FALSE         0.897  0.877  0.904
     ##  9:     2           s    FALSE         0.891  0.860  0.907
@@ -677,7 +693,7 @@ greedy_auc_single$summary[selected == TRUE][order(step),
     ##     step param_added auc_corrected auc_lo auc_hi
     ##    <int>      <char>         <num>  <num>  <num>
     ## 1:     1           F         0.730  0.730  0.730
-    ## 2:     2       alpha         0.815  0.814  0.816
+    ## 2:     2         phi         0.815  0.814  0.816
     ## 3:     3         ter         0.831  0.829  0.833
     ## 4:     4           s         0.837  0.834  0.838
     ## 5:     5         tau         0.810  0.806  0.813
@@ -700,11 +716,11 @@ greedy_auc_single$summary[order(step, -auc_corrected),
     ##      step param_added selected auc_corrected auc_lo auc_hi
     ##     <int>      <char>   <lgcl>         <num>  <num>  <num>
     ##  1:     1           F     TRUE         0.730  0.730  0.730
-    ##  2:     1       alpha    FALSE         0.722  0.722  0.722
+    ##  2:     1         phi    FALSE         0.722  0.722  0.722
     ##  3:     1           s    FALSE         0.628  0.628  0.628
     ##  4:     1         ter    FALSE         0.618  0.618  0.618
     ##  5:     1         tau    FALSE         0.556  0.556  0.556
-    ##  6:     2       alpha     TRUE         0.815  0.814  0.816
+    ##  6:     2         phi     TRUE         0.815  0.814  0.816
     ##  7:     2           s    FALSE         0.755  0.753  0.756
     ##  8:     2         tau    FALSE         0.748  0.746  0.749
     ##  9:     2         ter    FALSE         0.745  0.742  0.746
