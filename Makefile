@@ -38,7 +38,7 @@ FIT     := data/processed/AMLE_fit.csv
 
 .PHONY: all simulation application \
         sim-data sim-greedy sim-recovery data fit classify \
-        walkthrough help clean clean-cache
+        walkthrough stepwise help clean clean-cache
 .DEFAULT_GOAL := help
 
 ## all          : run both pipelines end to end (including walkthrough)
@@ -47,6 +47,10 @@ all: walkthrough simulation application
 ## walkthrough  : 00 model walkthrough notebook (renders to output/)
 walkthrough:
 	$(call RENDER,00_model_walkthrough.Rmd)
+
+## stepwise     : 000 stepwise parameter plots for presentations (PNGs -> output/stepwise/)
+stepwise:
+	$(call RENDER,000_stepwise_model_plots.Rmd)
 
 # ---------------------------------------------------------------------------
 # Simulation pipeline (synthetic data; self-contained, no raw data needed)

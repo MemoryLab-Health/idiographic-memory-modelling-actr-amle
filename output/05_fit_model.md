@@ -1,7 +1,7 @@
 Example application: Modelling memory function in MCI and healthy ageing
 ================
 Maarten van der Velde & Thomas Wilschut
-Last updated: 2026-06-30
+Last updated: 2026-08-26
 
 - [Overview](#overview)
 - [Setup](#setup)
@@ -18,6 +18,9 @@ Last updated: 2026-06-30
       RT](#decile-plots-of-predicted-and-observed-rt)
     - [Correlation between predicted and observed
       RT](#correlation-between-predicted-and-observed-rt)
+    - [Does excluding the top RT decile improve model fit? (Reviewer 2,
+      comment
+      6)](#does-excluding-the-top-rt-decile-improve-model-fit-reviewer-2-comment-6)
     - [Visual comparison of full RT
       distributions](#visual-comparison-of-full-rt-distributions)
   - [Estimated parameters](#estimated-parameters)
@@ -591,6 +594,142 @@ p_rt_corr + p_decile_rt  +
 # Paper Figure 8: RT model fit, panels A (correlation distribution) + B (decile plots) combined
 ggsave(here("output", "rt_fit_plots.png"), width = 10, height = 10)
 ```
+
+### Does excluding the top RT decile improve model fit? (Reviewer 2, comment 6)
+
+Figure 8B shows that the top decile of the RT distribution (each
+participant’s slowest 10% of responses) tends to deviate from the
+diagonal more than the rest of the distribution. The reviewer asked
+whether excluding this decile would improve the correspondence between
+predicted and observed RT. To check this without re-fitting the model,
+we recompute each participant’s predicted-vs-observed RT correlation (as
+in `cor_rt` above) after excluding their own top decile of observed RTs,
+and compare it to the correlation on their full set of correct trials.
+
+``` r
+# Per-participant predicted-vs-observed RT correlation, with vs without their
+# own top decile of observed RT excluded (uses the already-fitted parameters
+# via pred_rt_correct computed above -- no re-fitting involved).
+d_preds_correct[, rt_p90 := quantile(rt, 0.9), by = user_id]
+
+fit_full_by_user <- d_preds_correct[, .(r_full = cor(pred_rt_correct, rt), n_full = .N), by = user_id]
+
+fit_trimmed <- d_preds_correct[rt <= rt_p90, .(
+  r_trimmed = cor(pred_rt_correct, rt),
+  n_trimmed = .N
+), by = user_id]
+
+fit_comparison <- merge(fit_full_by_user, fit_trimmed, by = "user_id")
+fit_comparison[, delta_r := r_trimmed - r_full]
+
+fit_comparison[order(-delta_r)]
+```
+
+    ##     user_id    r_full n_full r_trimmed n_trimmed       delta_r
+    ##      <char>     <num>  <int>     <num>     <int>         <num>
+    ##  1: user_25 0.5796520     24 0.6752034        21  0.0955513452
+    ##  2: user_40 0.5967531   2361 0.6231875      2125  0.0264344594
+    ##  3: user_34 0.6394074     48 0.6584813        43  0.0190739138
+    ##  4: user_36 0.6250837   1789 0.6396559      1610  0.0145721546
+    ##  5: user_31 0.5673024   1060 0.5798171       954  0.0125147213
+    ##  6: user_11 0.6562916   2973 0.6674212      2675  0.0111295987
+    ##  7: user_50 0.6512656    883 0.6616029       794  0.0103373541
+    ##  8: user_09 0.6783040    916 0.6846818       824  0.0063777185
+    ##  9: user_29 0.5934304    340 0.5990364       306  0.0056060344
+    ## 10: user_48 0.6817695   1022 0.6861266       919  0.0043570881
+    ## 11: user_02 0.6454794   2920 0.6461364      2628  0.0006570083
+    ## 12: user_06 0.6116844   1301 0.6085089      1171 -0.0031754987
+    ## 13: user_15 0.6113008   1612 0.6081060      1450 -0.0031947268
+    ## 14: user_49 0.7046228   1718 0.6947182      1546 -0.0099045830
+    ## 15: user_46 0.6430686   5443 0.6316959      4899 -0.0113726863
+    ## 16: user_23 0.6943869    955 0.6802492       859 -0.0141377324
+    ## 17: user_16 0.6377786    792 0.6170263       712 -0.0207522370
+    ## 18: user_45 0.7029566   1165 0.6805405      1048 -0.0224161669
+    ## 19: user_07 0.6712325   3646 0.6468043      3282 -0.0244282457
+    ## 20: user_51 0.6458696   4078 0.6201994      3670 -0.0256701762
+    ## 21: user_39 0.6752750   3097 0.6490866      2787 -0.0261883478
+    ## 22: user_20 0.7132430   3716 0.6869364      3345 -0.0263065665
+    ## 23: user_22 0.7274382   1852 0.7002032      1666 -0.0272350205
+    ## 24: user_13 0.6191569   4660 0.5917080      4194 -0.0274488670
+    ## 25: user_19 0.6597304   2574 0.6290935      2316 -0.0306369172
+    ## 26: user_01 0.7477200    190 0.7162611       171 -0.0314589033
+    ## 27: user_18 0.7257713   2321 0.6940681      2089 -0.0317032521
+    ## 28: user_47 0.6339502   4628 0.6019475      4166 -0.0320026720
+    ## 29: user_43 0.6887257   2570 0.6551978      2313 -0.0335278991
+    ## 30: user_28 0.6571311    964 0.6216541       867 -0.0354769952
+    ## 31: user_03 0.6413045   1370 0.6047900      1233 -0.0365144402
+    ## 32: user_21 0.6538783   2976 0.6165292      2678 -0.0373490713
+    ## 33: user_10 0.6468807    530 0.6083245       477 -0.0385562781
+    ## 34: user_08 0.6747970   3340 0.6358806      3006 -0.0389164147
+    ## 35: user_38 0.6837150   3246 0.6425794      2921 -0.0411355879
+    ## 36: user_42 0.6136428   1356 0.5720659      1220 -0.0415769337
+    ## 37: user_33 0.6575508   4035 0.6155602      3631 -0.0419905161
+    ## 38: user_44 0.6450282   3550 0.6018916      3195 -0.0431366386
+    ## 39: user_41 0.6464601   3150 0.6030679      2836 -0.0433921812
+    ## 40: user_26 0.6344379   3524 0.5878927      3172 -0.0465452421
+    ## 41: user_05 0.7502900   3770 0.7013410      3394 -0.0489489534
+    ## 42: user_37 0.6372826   3795 0.5877752      3415 -0.0495074679
+    ## 43: user_27 0.6445631   2417 0.5894466      2175 -0.0551164845
+    ## 44: user_04 0.7158831    627 0.6605980       564 -0.0552850782
+    ## 45: user_12 0.6525363   3967 0.5945122      3570 -0.0580241157
+    ## 46: user_14 0.6526077   1343 0.5807782      1208 -0.0718295119
+    ## 47: user_32 0.7001516   5106 0.6249710      4595 -0.0751806009
+    ## 48: user_30 0.6689998   2460 0.5912676      2214 -0.0777321871
+    ## 49: user_35 0.6673340   5056 0.5882269      4550 -0.0791070616
+    ## 50: user_17 0.6449651   6068 0.5536140      5461 -0.0913510541
+    ## 51: user_24 0.9657235     12 0.7770717        10 -0.1886518318
+    ##     user_id    r_full n_full r_trimmed n_trimmed       delta_r
+
+``` r
+cat(sprintf("Mean r (full data):         %.3f\n", mean(fit_comparison$r_full)))
+```
+
+    ## Mean r (full data):         0.664
+
+``` r
+cat(sprintf("Mean r (top decile excl.):  %.3f\n", mean(fit_comparison$r_trimmed)))
+```
+
+    ## Mean r (top decile excl.):  0.635
+
+``` r
+cat(sprintf("Mean change (delta r):      %.3f\n", mean(fit_comparison$delta_r)))
+```
+
+    ## Mean change (delta r):      -0.029
+
+``` r
+cat(sprintf("Participants where fit improved after exclusion: %d / %d\n",
+            sum(fit_comparison$delta_r > 0), nrow(fit_comparison)))
+```
+
+    ## Participants where fit improved after exclusion: 11 / 51
+
+``` r
+wilcox.test(fit_comparison$r_trimmed, fit_comparison$r_full, paired = TRUE)
+```
+
+    ## 
+    ##  Wilcoxon signed rank test with continuity correction
+    ## 
+    ## data:  fit_comparison$r_trimmed and fit_comparison$r_full
+    ## V = 142, p-value = 1.067e-06
+    ## alternative hypothesis: true location shift is not equal to 0
+
+Excluding the top RT decile does not improve the correspondence between
+predicted and observed RT; on average it makes it slightly worse, and
+the correlation decreases for the majority of participants. This is
+consistent with a range-restriction effect: trimming based on the
+criterion variable’s (RT’s) own extreme values reduces the variance
+available to the correlation, rather than selectively removing poorly
+predicted trials. We therefore do not think the deviation visible in the
+top decile of Figure 8B reflects a correctable artefact of retaining too
+much data, and did not pursue a full model re-fit excluding these
+trials, since this check suggests it would not improve – and could
+worsen – the correspondence between predicted and observed RT. The
+residual tail deviation more likely reflects the heavier tail of the
+observed RT distribution relative to the model’s assumed log-logistic
+form (e.g., due to occasional attentional lapses).
 
 ### Visual comparison of full RT distributions
 
@@ -1226,10 +1365,11 @@ p_parameter_estimates <- ggplot(fit_amle_long_avg, aes(x = variable, y = value_m
   labs(x = "Parameter", y = "Estimated value", colour = "Clinical status", fill = "Clinical status") +
   scale_colour_manual(values = c("HC" = col_blue, "MCI" = col_red)) +
   scale_fill_manual(values = c("HC" = col_blue, "MCI" = col_red)) +
-  scale_x_discrete(labels = c(phi = expression(phi), tau = expression(tau), s = expression(s), lf = expression(F), ter = expression(t[er]))) +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
 
-# Paper Figure 9A: estimated parameters by clinical status (boxplots)
+# Paper Figure 9A: estimated parameters by clinical status (boxplots), Reviewer 2 minor comment 8 (enlarged x-labels)
 ggsave(here("output", "parameter_estimates_boxplot.png"), plot = p_parameter_estimates, width = 10, height = 6)
 p_parameter_estimates
 ```

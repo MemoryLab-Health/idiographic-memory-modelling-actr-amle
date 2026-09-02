@@ -628,6 +628,144 @@ greedy_auc_single$summary[order(step, -auc_corrected),
 ```
 
 
+# Worst-session vs. mean aggregation (Reviewer 2, comment 8)
+
+The classification results above aggregate each participant's session-level parameter estimates by taking their mean. The reviewer asked whether using the participant's worst performance instead (or the average of their worst two sessions) might be more sensitive to MCI. To check this, we reuse the already-fitted session-level estimates from the best-performing model (F + $\phi$, step 2 of the person-average selection) and compare four aggregation strategies. No re-fitting is required here, since these parameters are already estimated per session; only the aggregation across sessions changes.
+
+"Worst" is defined in the direction of the paper's MCI hypotheses: higher $\phi$ (faster forgetting) and higher $F$ (less efficient retrieval) are both expected to indicate greater impairment.
+
+```{r}
+# Per-session F + phi estimates from the best-performing model (step 2)
+worst_session_fits <- unique(greedy_auc$learner_fits[
+  step == 2 & param_added == "alpha",  # value stays "alpha"; only the column was renamed to phi above
+  .(user_id, session_id, clinical_status, phi, F = lf)
+])
+
+agg_mean <- worst_session_fits[, .(phi = mean(phi), F = mean(F)), by = user_id]
+
+agg_worst1 <- worst_session_fits[, .(phi = max(phi), F = max(F)), by = user_id]
+
+agg_worst2 <- worst_session_fits[, .(
+  phi = mean(sort(phi, decreasing = TRUE)[1:min(2, .N)]),
+  F   = mean(sort(F,   decreasing = TRUE)[1:min(2, .N)])
+), by = user_id]
+
+# Single worst session by a combined (z-scored) phi + F severity index, rather
+# than taking each parameter's max independently (possibly from different sessions)
+worst_session_fits_z <- copy(worst_session_fits)
+worst_session_fits_z[, `:=`(phi_z = scale(phi)[, 1], F_z = scale(F)[, 1])]
+worst_session_fits_z[, severity := phi_z + F_z]
+agg_worst_session <- worst_session_fits_z[order(user_id, -severity)][, .SD[1], by = user_id][, .(user_id, phi, F)]
+
+aggregation_strategies <- list(
+  "Mean across sessions (paper)"       = agg_mean,
+  "Worst session, per-parameter max"   = agg_worst1,
+  "Mean of worst 2 sessions"           = agg_worst2,
+  "Single worst session (joint index)" = agg_worst_session
+)
+
+aggregation_results <- rbindlist(lapply(names(aggregation_strategies), function(nm) {
+  df  <- merge(aggregation_strategies[[nm]], clinical_df, by = "user_id")
+  res <- bootstrap_auc_corrected(df$outcome, df[, .(phi, F)])
+  data.table(
+    strategy      = nm,
+    auc_apparent  = round(res$auc_apparent, 3),
+    auc_corrected = round(res$auc_corrected, 3),
+    auc_lo        = round(res$auc_lo, 3),
+    auc_hi        = round(res$auc_hi, 3)
+  )
+}))
+
+print(aggregation_results)
+
+saveRDS(aggregation_results, here::here("data", "processed", "fits", "worst_session_aggregation_results.rds"))
+```
+
+All three worst-session variants perform worse than simple mean aggregation, not better. This is consistent with the low session-level reliability reported elsewhere in the paper (ICC = 0.19--0.33 for these parameters): a single session's estimate carries substantial measurement noise, and selecting an extreme value across repeated noisy measurements tends to amplify that noise rather than isolate genuine impairment, whereas averaging suppresses it.
+
+
+# Baseline: classification from raw behavioural features (Reviewer 2, comments 5 & 9)
+
+The reviewer asked whether the classification results above (based on the fitted ACT-R parameters) outperform a simpler baseline that relies on the raw behavioural data directly, e.g. mean accuracy and a few RT quantiles. To check this, we compute the same bootstrap-corrected AUC (`bootstrap_auc_corrected()`, defined above) using only raw, model-free behavioural summary statistics: mean accuracy and RT deciles (the 10th--90th percentiles of RT), computed at the participant-average level to match the paper's headline classification result (F + $\phi$, AUC = .944).
+
+## Compute raw behavioural features
+
+```{r}
+rt_deciles <- seq(0.1, 0.9, by = 0.1)
+
+make_quantile_cols <- function(rt, probs) {
+  qs <- quantile(rt, probs)
+  names(qs) <- paste0("rt_q", round(probs * 100))
+  as.list(qs)
+}
+
+# ── Participant-average features (aggregated across all of a participant's sessions) ──
+person_behaviour <- d_filtered[, c(
+  list(mean_accuracy = mean(correct)),
+  make_quantile_cols(rt, rt_deciles)
+), by = user_id]
+
+person_behaviour <- merge(person_behaviour, clinical_df, by = "user_id")
+```
+
+## Classification AUC from raw behavioural features
+
+```{r}
+decile_cols <- grep("^rt_q", names(person_behaviour), value = TRUE)
+
+feature_sets <- list(
+  "Accuracy only"                = c("mean_accuracy"),
+  "RT deciles only"               = decile_cols,
+  "Accuracy + RT deciles"         = c("mean_accuracy", decile_cols)
+)
+
+baseline_auc <- function(df, feature_sets, label) {
+  rbindlist(lapply(names(feature_sets), function(nm) {
+    cols <- feature_sets[[nm]]
+    res  <- bootstrap_auc_corrected(df$outcome, df[, ..cols])
+    data.table(
+      aggregation   = label,
+      feature_set   = nm,
+      n_features    = length(cols),
+      auc_apparent  = res$auc_apparent,
+      auc_corrected = res$auc_corrected,
+      auc_lo        = res$auc_lo,
+      auc_hi        = res$auc_hi
+    )
+  }))
+}
+
+baseline_results <- baseline_auc(person_behaviour, feature_sets, "Participant-average")
+
+baseline_results[, `:=`(
+  auc_apparent  = round(auc_apparent, 3),
+  auc_corrected = round(auc_corrected, 3),
+  auc_lo        = round(auc_lo, 3),
+  auc_hi        = round(auc_hi, 3)
+)]
+
+print(baseline_results)
+
+saveRDS(baseline_results, here::here("data", "processed", "fits", "baseline_behaviour_auc_results.rds"))
+```
+
+Note the gap between `auc_apparent` and `auc_corrected` for the 10-feature model (accuracy + RT deciles): with 10 features predicting only 51 outcomes, the bootstrap correction is doing real work to counteract overfitting, so the corrected AUC is the one that should be compared to the model-based result below, not the apparent one.
+
+## Comparison to the model-based classification result
+
+For reference, the model-based (ACT-R parameter) AUC reported in the text for participant averages is F + $\phi$ = .944 (best model), decreasing slightly to .930--.926 with further parameters added. Comparing this to the raw-behavioural-feature baseline above shows whether the fitted parameters provide a classification advantage over the raw accuracy/RT summary statistics alone.
+
+```{r}
+model_reference <- data.table(
+  aggregation = "Participant-average",
+  model_auc   = 0.944,
+  model_desc  = "F + phi (best step)"
+)
+print(model_reference)
+```
+
+
+
 # Session info
 
 ```{r}

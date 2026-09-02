@@ -400,6 +400,39 @@ p_rt_corr + p_decile_rt  +
 ggsave(here("output", "rt_fit_plots.png"), width = 10, height = 10)
 ```
 
+### Does excluding the top RT decile improve model fit? (Reviewer 2, comment 6)
+
+Figure 8B shows that the top decile of the RT distribution (each participant's slowest 10% of responses) tends to deviate from the diagonal more than the rest of the distribution. The reviewer asked whether excluding this decile would improve the correspondence between predicted and observed RT. To check this without re-fitting the model, we recompute each participant's predicted-vs-observed RT correlation (as in `cor_rt` above) after excluding their own top decile of observed RTs, and compare it to the correlation on their full set of correct trials.
+
+```{r rt-fit-excl-top-decile}
+# Per-participant predicted-vs-observed RT correlation, with vs without their
+# own top decile of observed RT excluded (uses the already-fitted parameters
+# via pred_rt_correct computed above -- no re-fitting involved).
+d_preds_correct[, rt_p90 := quantile(rt, 0.9), by = user_id]
+
+fit_full_by_user <- d_preds_correct[, .(r_full = cor(pred_rt_correct, rt), n_full = .N), by = user_id]
+
+fit_trimmed <- d_preds_correct[rt <= rt_p90, .(
+  r_trimmed = cor(pred_rt_correct, rt),
+  n_trimmed = .N
+), by = user_id]
+
+fit_comparison <- merge(fit_full_by_user, fit_trimmed, by = "user_id")
+fit_comparison[, delta_r := r_trimmed - r_full]
+
+fit_comparison[order(-delta_r)]
+
+cat(sprintf("Mean r (full data):         %.3f\n", mean(fit_comparison$r_full)))
+cat(sprintf("Mean r (top decile excl.):  %.3f\n", mean(fit_comparison$r_trimmed)))
+cat(sprintf("Mean change (delta r):      %.3f\n", mean(fit_comparison$delta_r)))
+cat(sprintf("Participants where fit improved after exclusion: %d / %d\n",
+            sum(fit_comparison$delta_r > 0), nrow(fit_comparison)))
+
+wilcox.test(fit_comparison$r_trimmed, fit_comparison$r_full, paired = TRUE)
+```
+
+Excluding the top RT decile does not improve the correspondence between predicted and observed RT; on average it makes it slightly worse, and the correlation decreases for the majority of participants. This is consistent with a range-restriction effect: trimming based on the criterion variable's (RT's) own extreme values reduces the variance available to the correlation, rather than selectively removing poorly predicted trials. We therefore do not think the deviation visible in the top decile of Figure 8B reflects a correctable artefact of retaining too much data, and did not pursue a full model re-fit excluding these trials, since this check suggests it would not improve -- and could worsen -- the correspondence between predicted and observed RT. The residual tail deviation more likely reflects the heavier tail of the observed RT distribution relative to the model's assumed log-logistic form (e.g., due to occasional attentional lapses).
+
 ### Visual comparison of full RT distributions
 
 We'll also compare the full RT distributions, including incorrect responses.
@@ -740,10 +773,11 @@ p_parameter_estimates <- ggplot(fit_amle_long_avg, aes(x = variable, y = value_m
   labs(x = "Parameter", y = "Estimated value", colour = "Clinical status", fill = "Clinical status") +
   scale_colour_manual(values = c("HC" = col_blue, "MCI" = col_red)) +
   scale_fill_manual(values = c("HC" = col_blue, "MCI" = col_red)) +
-  scale_x_discrete(labels = c(phi = expression(phi), tau = expression(tau), s = expression(s), lf = expression(F), ter = expression(t[er]))) +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
 
-# Paper Figure 9A: estimated parameters by clinical status (boxplots)
+# Paper Figure 9A: estimated parameters by clinical status (boxplots), Reviewer 2 minor comment 8 (enlarged x-labels)
 ggsave(here("output", "parameter_estimates_boxplot.png"), plot = p_parameter_estimates, width = 10, height = 6)
 p_parameter_estimates
 ```

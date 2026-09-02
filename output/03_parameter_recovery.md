@@ -1,7 +1,7 @@
 Simulation: parameter recovery as a function of available data
 ================
 Thomas Wilschut
-Last updated: 2026-06-30
+Last updated: 2026-09-02
 
 - [Setup](#setup)
 - [Simulate a larger dataset for
@@ -13,6 +13,7 @@ Last updated: 2026-06-30
 - [Fact-level Δφ recovery (Figure 6)](#fact-level-δφ-recovery-figure-6)
 - [Correlations of the true
   parameters](#correlations-of-the-true-parameters)
+- [Session info](#session-info)
 
 This markdown file is can be used to reproduce the results reported in
 the paper: Idiographic Memory Modelling in ACT-R using Alternating
@@ -516,7 +517,125 @@ pairs_true
     ## `geom_smooth()` using formula = 'y ~ x'
 
 ![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/03_parameter_recovery_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
-\# Session info
+\# Stepwise decomposition of recovery figures (for slides)
+
+Export panels A (recovery vs. repetitions) and C (recovery vs. facts) in
+five cumulative steps, adding one parameter at a time in the canonical
+order used throughout the paper: φ → τ → s → F → t_er. Each step is
+saved as both PNG and SVG.
+
+``` r
+dir.create(here::here("output", "recovery_stepwise"), showWarnings = FALSE)
+
+# Canonical parameter sequence (matches param_levels order throughout paper)
+param_seq <- c(
+  "Speed of Forgetting",
+  "Retrieval threshold",
+  "Activation noise",
+  "Latency factor",
+  "Non-retrieval time"
+)
+
+# File-name slugs matching the sequence
+param_slugs <- c("phi", "tau", "s", "lf", "ter")
+
+# ── Stepwise plot helper ────────────────────────────────────────────────────
+# Same aesthetics as plot_cor but only draws the params in `show_params`
+plot_cor_step <- function(df, x_var, x_lab, show_params, highlight_x = NULL) {
+  df_sub <- df[df$param_label %in% show_params, ]
+  # Keep factor levels in canonical order so colours stay consistent
+  df_sub$param_label <- factor(df_sub$param_label, levels = param_levels)
+
+  p <- ggplot(df_sub,
+              aes(x = factor(!!sym(x_var)), y = correlation,
+                  colour = param_label, linetype = param_label,
+                  shape = param_label, group = param_label))
+
+  if (!is.null(highlight_x)) {
+    p <- p + annotate("rect",
+      xmin = which(levels(factor(df_sub[[x_var]])) == as.character(highlight_x)) - 0.4,
+      xmax = which(levels(factor(df_sub[[x_var]])) == as.character(highlight_x)) + 0.4,
+      ymin = -Inf, ymax = Inf, fill = "grey80", alpha = 0.4)
+  }
+
+  p +
+    geom_line(linewidth = 1) +
+    geom_point(size = 2) +
+    scale_y_continuous(limits = c(0, 1)) +
+    # Use the same shared scales so colours are always identical across steps
+    scale_color_manual(values = param_colors, breaks = param_levels,
+                       drop = FALSE) +
+    scale_linetype_manual(values = param_linetypes, breaks = param_levels,
+                          drop = FALSE) +
+    scale_shape_manual(values = param_shapes, breaks = param_levels,
+                       drop = FALSE) +
+    guides(colour   = guide_legend(override.aes = list(
+                        linetype = param_linetypes[param_levels],
+                        shape    = param_shapes[param_levels]),
+                        ncol = 1),
+           linetype = "none", shape = "none") +
+    plottheme +
+    theme(legend.position  = "right",
+          legend.title     = element_blank(),
+          legend.text      = element_text(size = 9),
+          legend.key.width = unit(1.5, "cm")) +
+    labs(x = x_lab, y = "Recovery (Pearson's r)")
+}
+
+# ── Export loop ─────────────────────────────────────────────────────────────
+# cor_reps / cor_facts were computed in the Recovery chunk above
+# (filtered to n_repetitions < 20 for panel A, full range for panel C)
+cor_reps_slide  <- cor_reps  %>% filter(n_repetitions < 20)
+cor_facts_slide <- cor_facts
+
+for (i in seq_along(param_seq)) {
+  shown  <- param_seq[seq_len(i)]
+  slug   <- paste(param_slugs[seq_len(i)], collapse = "-")
+  prefix <- sprintf("step_%02d_%s", i, slug)
+
+  p_step_reps  <- plot_cor_step(
+    cor_reps_slide, "n_repetitions",
+    "Repetitions per fact (15 facts)",
+    show_params = shown, highlight_x = 10
+  )
+
+  p_step_facts <- plot_cor_step(
+    cor_facts_slide, "n_facts_grid",
+    "N facts (10 repetitions)",
+    show_params = shown, highlight_x = 15
+  )
+
+  # Panel A: recovery vs repetitions
+  ggsave(here::here("output", "recovery_stepwise",
+                    paste0(prefix, "_reps.png")),
+         p_step_reps, width = 5.5, height = 5, dpi = 150)
+  ggsave(here::here("output", "recovery_stepwise",
+                    paste0(prefix, "_reps.svg")),
+         p_step_reps, width = 5.5, height = 5)
+
+  # Panel C: recovery vs facts
+  ggsave(here::here("output", "recovery_stepwise",
+                    paste0(prefix, "_facts.png")),
+         p_step_facts, width = 5.5, height = 5, dpi = 150)
+  ggsave(here::here("output", "recovery_stepwise",
+                    paste0(prefix, "_facts.svg")),
+         p_step_facts, width = 5.5, height = 5)
+
+  cat(sprintf("Exported step %d/%d: %s\n", i, length(param_seq), prefix))
+}
+```
+
+    ## Exported step 1/5: step_01_phi
+
+    ## Exported step 2/5: step_02_phi-tau
+
+    ## Exported step 3/5: step_03_phi-tau-s
+
+    ## Exported step 4/5: step_04_phi-tau-s-lf
+
+    ## Exported step 5/5: step_05_phi-tau-s-lf-ter
+
+# Session info
 
 ``` r
 sessionInfo()
@@ -558,5 +677,5 @@ sessionInfo()
     ## [33] ragg_1.5.0         pkgconfig_2.0.3    pillar_1.11.1      gtable_0.3.6      
     ## [37] glue_1.8.0         systemfonts_1.3.1  xfun_0.53          tidyselect_1.2.1  
     ## [41] rstudioapi_0.17.1  knitr_1.50         farver_2.1.2       nlme_3.1-168      
-    ## [45] htmltools_0.5.8.1  labeling_0.4.3     rmarkdown_2.30     compiler_4.5.1    
-    ## [49] S7_0.2.0
+    ## [45] htmltools_0.5.8.1  svglite_2.2.1      labeling_0.4.3     rmarkdown_2.30    
+    ## [49] compiler_4.5.1     S7_0.2.0

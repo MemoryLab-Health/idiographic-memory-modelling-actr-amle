@@ -1,0 +1,68 @@
+<svg viewBox="0 0 860 220" xmlns="http://www.w3.org/2000/svg" font-family="'Helvetica Neue', Arial, sans-serif">
+
+  <!-- Background -->
+  <rect width="860" height="220" fill="#fafafa" rx="8"/>
+
+  <!-- ── Box 1: Simulate ── -->
+  <rect x="20" y="55" width="175" height="115" rx="10" fill="#e8f4f8" stroke="#5b9dc9" stroke-width="2"/>
+  <text x="107" y="85" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a5276">Simulate</text>
+  <line x1="30" y1="93" x2="185" y2="93" stroke="#5b9dc9" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="107" y="112" text-anchor="middle" font-size="11.5" fill="#2c3e50">50 learners × 15 facts</text>
+  <text x="107" y="129" text-anchor="middle" font-size="11.5" fill="#2c3e50">50 repetitions per fact</text>
+  <text x="107" y="148" text-anchor="middle" font-size="11" fill="#5d6d7e" font-style="italic">known parameters</text>
+  <text x="107" y="163" text-anchor="middle" font-size="11" fill="#5d6d7e" font-style="italic">φ, τ, s, F, t</text>
+  <text x="141" y="166" text-anchor="middle" font-size="8.5" fill="#5d6d7e" font-style="italic">er</text>
+
+  <!-- Arrow 1→2 -->
+  <line x1="197" y1="112" x2="228" y2="112" stroke="#888" stroke-width="2"/>
+  <polygon points="228,107 238,112 228,117" fill="#888"/>
+
+  <!-- ── Box 2: Subset ── -->
+  <rect x="240" y="35" width="175" height="155" rx="10" fill="#eaf7ea" stroke="#5aab61" stroke-width="2"/>
+  <text x="327" y="63" text-anchor="middle" font-size="15" font-weight="bold" fill="#1e5c2e">Subset</text>
+  <line x1="250" y1="71" x2="405" y2="71" stroke="#5aab61" stroke-width="1" stroke-dasharray="3,2"/>
+  <!-- Axis A -->
+  <text x="327" y="93" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#2c3e50">Axis A</text>
+  <text x="327" y="110" text-anchor="middle" font-size="11" fill="#2c3e50">vary repetitions (1–20)</text>
+  <text x="327" y="125" text-anchor="middle" font-size="11" fill="#5d6d7e" font-style="italic">15 facts fixed</text>
+  <!-- Divider -->
+  <line x1="265" y1="135" x2="390" y2="135" stroke="#5aab61" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/>
+  <!-- Axis B -->
+  <text x="327" y="153" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#2c3e50">Axis B</text>
+  <text x="327" y="170" text-anchor="middle" font-size="11" fill="#2c3e50">vary facts (1–30)</text>
+  <text x="327" y="185" text-anchor="middle" font-size="11" fill="#5d6d7e" font-style="italic">10 reps fixed</text>
+
+  <!-- Arrow 2→3 -->
+  <line x1="417" y1="112" x2="448" y2="112" stroke="#888" stroke-width="2"/>
+  <polygon points="448,107 458,112 448,117" fill="#888"/>
+
+  <!-- ── Box 3: Fit AMLE ── -->
+  <rect x="460" y="55" width="175" height="115" rx="10" fill="#fef9e7" stroke="#d4ac0d" stroke-width="2"/>
+  <text x="547" y="85" text-anchor="middle" font-size="15" font-weight="bold" fill="#7d6608">Fit AMLE</text>
+  <line x1="470" y1="93" x2="625" y2="93" stroke="#d4ac0d" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="547" y="113" text-anchor="middle" font-size="11.5" fill="#2c3e50">Alternating Maximum</text>
+  <text x="547" y="130" text-anchor="middle" font-size="11.5" fill="#2c3e50">Likelihood Estimation</text>
+  <text x="547" y="150" text-anchor="middle" font-size="11" fill="#5d6d7e" font-style="italic">recover φ, τ, s, F, t</text>
+  <text x="582" y="153" text-anchor="middle" font-size="8.5" fill="#5d6d7e" font-style="italic">er</text>
+  <text x="547" y="163" text-anchor="middle" font-size="11" fill="#5d6d7e" font-style="italic">per learner</text>
+
+  <!-- Arrow 3→4 -->
+  <line x1="637" y1="112" x2="668" y2="112" stroke="#888" stroke-width="2"/>
+  <polygon points="668,107 678,112 668,117" fill="#888"/>
+
+  <!-- ── Box 4: Compare ── -->
+  <rect x="680" y="55" width="162" height="115" rx="10" fill="#f5eef8" stroke="#8e44ad" stroke-width="2"/>
+  <text x="761" y="85" text-anchor="middle" font-size="15" font-weight="bold" fill="#5b2c6f">Compare</text>
+  <line x1="690" y1="93" x2="832" y2="93" stroke="#8e44ad" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="761" y="112" text-anchor="middle" font-size="11.5" fill="#2c3e50">Pearson r between</text>
+  <text x="761" y="129" text-anchor="middle" font-size="11.5" fill="#2c3e50">recovered vs. true</text>
+  <text x="761" y="148" text-anchor="middle" font-size="11" fill="#5d6d7e" font-style="italic">per parameter,</text>
+  <text x="761" y="163" text-anchor="middle" font-size="11" fill="#5d6d7e" font-style="italic">per data quantity</text>
+
+  <!-- Step labels -->
+  <text x="107" y="195" text-anchor="middle" font-size="10.5" fill="#888">step 1</text>
+  <text x="327" y="215" text-anchor="middle" font-size="10.5" fill="#888">step 2</text>
+  <text x="547" y="195" text-anchor="middle" font-size="10.5" fill="#888">step 3</text>
+  <text x="761" y="195" text-anchor="middle" font-size="10.5" fill="#888">step 4</text>
+
+</svg>

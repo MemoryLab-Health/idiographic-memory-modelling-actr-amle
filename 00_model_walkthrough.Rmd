@@ -8,6 +8,8 @@ output:
     toc_float: yes
   github_document:
     toc: yes
+editor_options:
+  chunk_output_type: inline
 ---
 
 

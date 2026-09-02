@@ -438,6 +438,113 @@ pairs_true <- ggpairs(
         axis.text.x      = element_text(angle = 90, hjust = 1))
 pairs_true
 ```
+# Stepwise decomposition of recovery figures (for slides)
+
+Export panels A (recovery vs. repetitions) and C (recovery vs. facts) in five cumulative
+steps, adding one parameter at a time in the canonical order used throughout the paper:
+φ → τ → s → F → t_er. Each step is saved as both PNG and SVG.
+
+```{r stepwise-recovery, message=FALSE, warning=FALSE}
+dir.create(here::here("output", "recovery_stepwise"), showWarnings = FALSE)
+
+# Canonical parameter sequence (matches param_levels order throughout paper)
+param_seq <- c(
+  "Speed of Forgetting",
+  "Retrieval threshold",
+  "Activation noise",
+  "Latency factor",
+  "Non-retrieval time"
+)
+
+# File-name slugs matching the sequence
+param_slugs <- c("phi", "tau", "s", "lf", "ter")
+
+# ── Stepwise plot helper ────────────────────────────────────────────────────
+# Same aesthetics as plot_cor but only draws the params in `show_params`
+plot_cor_step <- function(df, x_var, x_lab, show_params, highlight_x = NULL) {
+  df_sub <- df[df$param_label %in% show_params, ]
+  # Keep factor levels in canonical order so colours stay consistent
+  df_sub$param_label <- factor(df_sub$param_label, levels = param_levels)
+
+  p <- ggplot(df_sub,
+              aes(x = factor(!!sym(x_var)), y = correlation,
+                  colour = param_label, linetype = param_label,
+                  shape = param_label, group = param_label))
+
+  if (!is.null(highlight_x)) {
+    p <- p + annotate("rect",
+      xmin = which(levels(factor(df_sub[[x_var]])) == as.character(highlight_x)) - 0.4,
+      xmax = which(levels(factor(df_sub[[x_var]])) == as.character(highlight_x)) + 0.4,
+      ymin = -Inf, ymax = Inf, fill = "grey80", alpha = 0.4)
+  }
+
+  p +
+    geom_line(linewidth = 1) +
+    geom_point(size = 2) +
+    scale_y_continuous(limits = c(0, 1)) +
+    # Use the same shared scales so colours are always identical across steps
+    scale_color_manual(values = param_colors, breaks = param_levels,
+                       drop = FALSE) +
+    scale_linetype_manual(values = param_linetypes, breaks = param_levels,
+                          drop = FALSE) +
+    scale_shape_manual(values = param_shapes, breaks = param_levels,
+                       drop = FALSE) +
+    guides(colour   = guide_legend(override.aes = list(
+                        linetype = param_linetypes[param_levels],
+                        shape    = param_shapes[param_levels]),
+                        ncol = 1),
+           linetype = "none", shape = "none") +
+    plottheme +
+    theme(legend.position  = "right",
+          legend.title     = element_blank(),
+          legend.text      = element_text(size = 9),
+          legend.key.width = unit(1.5, "cm")) +
+    labs(x = x_lab, y = "Recovery (Pearson's r)")
+}
+
+# ── Export loop ─────────────────────────────────────────────────────────────
+# cor_reps / cor_facts were computed in the Recovery chunk above
+# (filtered to n_repetitions < 20 for panel A, full range for panel C)
+cor_reps_slide  <- cor_reps  %>% filter(n_repetitions < 20)
+cor_facts_slide <- cor_facts
+
+for (i in seq_along(param_seq)) {
+  shown  <- param_seq[seq_len(i)]
+  slug   <- paste(param_slugs[seq_len(i)], collapse = "-")
+  prefix <- sprintf("step_%02d_%s", i, slug)
+
+  p_step_reps  <- plot_cor_step(
+    cor_reps_slide, "n_repetitions",
+    "Repetitions per fact (15 facts)",
+    show_params = shown, highlight_x = 10
+  )
+
+  p_step_facts <- plot_cor_step(
+    cor_facts_slide, "n_facts_grid",
+    "N facts (10 repetitions)",
+    show_params = shown, highlight_x = 15
+  )
+
+  # Panel A: recovery vs repetitions
+  ggsave(here::here("output", "recovery_stepwise",
+                    paste0(prefix, "_reps.png")),
+         p_step_reps, width = 5.5, height = 5, dpi = 150)
+  ggsave(here::here("output", "recovery_stepwise",
+                    paste0(prefix, "_reps.svg")),
+         p_step_reps, width = 5.5, height = 5)
+
+  # Panel C: recovery vs facts
+  ggsave(here::here("output", "recovery_stepwise",
+                    paste0(prefix, "_facts.png")),
+         p_step_facts, width = 5.5, height = 5, dpi = 150)
+  ggsave(here::here("output", "recovery_stepwise",
+                    paste0(prefix, "_facts.svg")),
+         p_step_facts, width = 5.5, height = 5)
+
+  cat(sprintf("Exported step %d/%d: %s\n", i, length(param_seq), prefix))
+}
+```
+
 # Session info
 ```{r}
 sessionInfo()

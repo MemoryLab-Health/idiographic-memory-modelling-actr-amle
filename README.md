@@ -7,7 +7,7 @@ The repository contains a model walkthrough notebook and two analysis pipelines,
 - **`00_model_walkthrough.Rmd`** — a self-contained introduction to the ACT-R memory model: activation function, likelihood functions for accuracy and response time, and the effect of each parameter on behaviour.
 
 - **`simulation/`** (scripts 01–03) — a parameter-recovery study on synthetic data, establishing that the five participant-level ACT-R parameters and the fact-level offsets are jointly identifiable from realistic amounts of retrieval-practice data.
-- **`example-application/`** (scripts 04–06) — an application to the longitudinal clinical data of [Hake et al. (2024)](https://www.medrxiv.org/content/10.1101/2024.03.15.24304345v1), fitting the model and asking which parameters distinguish mild cognitive impairment (MCI) from healthy controls (HC).
+- **`example-application/`** (scripts 04–06) — an application to the longitudinal clinical data of [Hake et al. (2026)](https://doi.org/10.1371/journal.pdig.0001686), fitting the model and asking which parameters distinguish mild cognitive impairment (MCI) from healthy controls (HC).
 
 Both pipelines share a single implementation of the ACT-R likelihood, the simulator, and the AMLE fitting procedure, in [`R/`](./R).
 
@@ -25,7 +25,7 @@ actr-amle/
 │   └── processed/            Shipped: prepared data + cached model fits
 │       ├── hake2024.csv
 │       ├── AMLE_fit.csv
-│       ├── AMLE_delta_phi.csv
+│       ├── AMLE_delta_alpha.csv
 │       └── fits/             Cached `.rds` results for the expensive steps
 ├── simulation/
 │   └── scripts/
@@ -62,7 +62,7 @@ make simulation        # runs 01 -> 02 -> 03
 The processed data and cached fits are shipped, so the model-fitting and classification steps run without the raw source file:
 
 ```bash
-make fit               # 05: fit the AMLE model -> data/processed/AMLE_fit.csv, AMLE_delta_phi.csv
+make fit               # 05: fit the AMLE model -> data/processed/AMLE_fit.csv, AMLE_delta_alpha.csv
 make classify          # 06: parameter contributions to MCI vs HC classification
 ```
 
@@ -90,7 +90,7 @@ Only `05_fit_model.md` is shipped pre-rendered; the others appear once you run `
 
 The processed retrieval-practice data and the cached model fits needed to reproduce the figures are included under [`data/processed/`](./data/processed).
 
-The **raw** source data (`data/raw/hake2024.Rdata`) from Hake et al. (2024) is not distributed with this repository and is excluded via `.gitignore`. To regenerate the processed data, place that file in `data/raw/` and run `make data`.
+The **raw** source data (`data/raw/hake2024.Rdata`) from Hake et al. (2026) is not distributed with this repository and is excluded via `.gitignore`. To regenerate the processed data, place that file in `data/raw/` and run `make data`.
 
 ## Notes
 

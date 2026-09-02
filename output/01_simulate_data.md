@@ -1,13 +1,16 @@
 Simulation: generating synthetic retrieval-practice data
 ================
 Thomas Wilschut
-Last updated: 2026-06-30
+Last updated: 2026-09-02
 
 - [Setup](#setup)
 - [Simulate data](#simulate-data)
 - [Checks](#checks)
   - [Parameter distributions and their relationship to behavior (Figure
     2)](#parameter-distributions-and-their-relationship-to-behavior-figure-2)
+  - [Effect of parameters on RT after accounting for non-retrieval time
+    (Reviewer 2, comment 3;
+    supplementary)](#effect-of-parameters-on-rt-after-accounting-for-non-retrieval-time-reviewer-2-comment-3-supplementary)
   - [Check 2: Observed accuracy vs. predicted
     P(correct)](#check-2-observed-accuracy-vs-predicted-pcorrect)
   - [Check 3: Learning curves — accuracy and RT over
@@ -242,6 +245,85 @@ retrieval threshold (τ) should show the clearest relationships with
 accuracy; latency factor (F) and non-retrieval time (t<sub>er</sub>)
 should primarily affect RT.
 
+## Effect of parameters on RT after accounting for non-retrieval time (Reviewer 2, comment 3; supplementary)
+
+In Figure 2 (panel C), median RT scales approximately linearly with
+non-retrieval time (t<sub>er</sub>), since t<sub>er</sub> is added
+directly on top of the retrieval-related component of RT. To check that
+the (weaker) relationships visible for the other parameters in panel C
+are not simply an artefact of this additive offset, we recompute median
+RT after subtracting each learner’s own t<sub>er</sub> from every trial
+(i.e. their median “decision time”, RT − t<sub>er</sub>), and relate
+this to φ, τ, s, and F. t<sub>er</sub> itself is excluded here, since
+subtracting t<sub>er</sub> from RT trivially removes its own effect.
+
+``` r
+sim_test[, decision_time := rt - true_ter]
+
+learner_summary_ex_ter <- sim_test %>%
+  group_by(user_id, true_phi, true_tau, true_s, true_lf) %>%
+  summarise(
+    med_decision_time = median(decision_time),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols      = c(true_phi, true_tau, true_s, true_lf),
+    names_to  = "parameter",
+    values_to = "param_value"
+  ) %>%
+  mutate(
+    parameter = recode(parameter,
+      "true_phi" = "Speed of Forgetting",
+      "true_tau"   = "Retrieval threshold",
+      "true_s"     = "Activation noise",
+      "true_lf"    = "Latency factor"
+    ),
+    parameter = factor(parameter, levels = param_levels[param_levels != "Non-retrieval time"])
+  )
+
+param_ranges_ex_ter <- learner_summary_ex_ter %>%
+  group_by(parameter) %>%
+  summarise(xmin = min(param_value), xmax = max(param_value), .groups = "drop") %>%
+  pivot_longer(c(xmin, xmax), names_to = "bound", values_to = "value") %>%
+  select(parameter, value)
+
+rt_ex_ter_plot <- ggplot(learner_summary_ex_ter, aes(x = param_value, y = med_decision_time, color = parameter)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", color = "black", se = TRUE) +
+  geom_blank(data = param_ranges_ex_ter, aes(x = value), inherit.aes = FALSE) +
+  facet_wrap(~ parameter, scales = "free_x", nrow = 1) +
+  labs(x = "Parameter value", y = expression("Median "*(RT - t[er])*" (s)")) +
+  theme_bw() +
+  theme(
+    legend.position  = "none",
+    strip.background = element_rect(fill = "grey85", colour = "grey60"),
+    strip.text       = element_text(size = 8, margin = margin(3, 3, 3, 3)),
+    plot.margin      = margin(10, 20, 10, 20),
+    panel.spacing    = unit(1, "lines")
+  ) +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 4), expand = expansion(mult = 0.12)) +
+  scale_color_aaas()
+
+rt_ex_ter_plot
+```
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+``` r
+# Supplementary figure: parameter effects on RT after accounting for non-retrieval time
+ggsave(here::here("output", "parameter_effects_on_rt_excluding_ter.png"), plot = rt_ex_ter_plot, width = 10, height = 3.2)
+```
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+The relationships for φ and F remain clearly visible after subtracting
+t<sub>er</sub>, confirming that they are not simply an artefact of the
+additive non-retrieval time offset; τ shows a weaker negative trend, and
+activation noise (s) shows essentially no relationship with decision
+time, consistent with panel C of Figure 2.
+
 ## Check 2: Observed accuracy vs. predicted P(correct)
 
 ``` r
@@ -319,7 +401,7 @@ p_sigmoid <- ggplot() +
 p_calib + p_sigmoid
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 The left panel is a calibration plot: if the simulation is internally
 consistent, the binned points should fall close to the diagonal. The
@@ -357,7 +439,7 @@ p_rt_rep <- ggplot(learn_curve, aes(x = rep, y = median_rt)) +
 p_acc_rep + p_rt_rep
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 Accuracy should increase and RT should decrease over repetitions,
 reflecting the strengthening of memory traces through practice. The IQR
@@ -389,7 +471,7 @@ p_da_acc + p_da_rt
     ## `geom_smooth()` using formula = 'y ~ x'
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 Higher fact offsets (Δφ) make a fact harder to retain, so accuracy
 should decrease and RT should increase with larger offsets. Each dot is
@@ -411,7 +493,7 @@ ggplot(sim_test, aes(x = rt, fill = correct)) +
   theme(legend.position = c(0.85, 0.85))
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 Correct responses should be faster than incorrect ones, consistent with
 the model’s assumption that higher activation produces both faster and

@@ -203,6 +203,65 @@ ggsave(here::here("output", "parameter_distributions_and_behaviour.png"), width 
 
 Panel A shows the distributions of the five simulated person-level parameters. Panels B and C show how each parameter relates to aggregate accuracy and median RT, respectively. Speed of forgetting (φ) and retrieval threshold (τ) should show the clearest relationships with accuracy; latency factor (F) and non-retrieval time (t~er~) should primarily affect RT.
 
+## Effect of parameters on RT after accounting for non-retrieval time (Reviewer 2, comment 3; supplementary)
+
+In Figure 2 (panel C), median RT scales approximately linearly with non-retrieval time (t~er~), since t~er~ is added directly on top of the retrieval-related component of RT. To check that the (weaker) relationships visible for the other parameters in panel C are not simply an artefact of this additive offset, we recompute median RT after subtracting each learner's own t~er~ from every trial (i.e. their median "decision time", RT − t~er~), and relate this to φ, τ, s, and F. t~er~ itself is excluded here, since subtracting t~er~ from RT trivially removes its own effect.
+
+```{r}
+sim_test[, decision_time := rt - true_ter]
+
+learner_summary_ex_ter <- sim_test %>%
+  group_by(user_id, true_phi, true_tau, true_s, true_lf) %>%
+  summarise(
+    med_decision_time = median(decision_time),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols      = c(true_phi, true_tau, true_s, true_lf),
+    names_to  = "parameter",
+    values_to = "param_value"
+  ) %>%
+  mutate(
+    parameter = recode(parameter,
+      "true_phi" = "Speed of Forgetting",
+      "true_tau"   = "Retrieval threshold",
+      "true_s"     = "Activation noise",
+      "true_lf"    = "Latency factor"
+    ),
+    parameter = factor(parameter, levels = param_levels[param_levels != "Non-retrieval time"])
+  )
+
+param_ranges_ex_ter <- learner_summary_ex_ter %>%
+  group_by(parameter) %>%
+  summarise(xmin = min(param_value), xmax = max(param_value), .groups = "drop") %>%
+  pivot_longer(c(xmin, xmax), names_to = "bound", values_to = "value") %>%
+  select(parameter, value)
+
+rt_ex_ter_plot <- ggplot(learner_summary_ex_ter, aes(x = param_value, y = med_decision_time, color = parameter)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", color = "black", se = TRUE) +
+  geom_blank(data = param_ranges_ex_ter, aes(x = value), inherit.aes = FALSE) +
+  facet_wrap(~ parameter, scales = "free_x", nrow = 1) +
+  labs(x = "Parameter value", y = expression("Median "*(RT - t[er])*" (s)")) +
+  theme_bw() +
+  theme(
+    legend.position  = "none",
+    strip.background = element_rect(fill = "grey85", colour = "grey60"),
+    strip.text       = element_text(size = 8, margin = margin(3, 3, 3, 3)),
+    plot.margin      = margin(10, 20, 10, 20),
+    panel.spacing    = unit(1, "lines")
+  ) +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 4), expand = expansion(mult = 0.12)) +
+  scale_color_aaas()
+
+rt_ex_ter_plot
+
+# Supplementary figure: parameter effects on RT after accounting for non-retrieval time
+ggsave(here::here("output", "parameter_effects_on_rt_excluding_ter.png"), plot = rt_ex_ter_plot, width = 10, height = 3.2)
+```
+
+The relationships for φ and F remain clearly visible after subtracting t~er~, confirming that they are not simply an artefact of the additive non-retrieval time offset; τ shows a weaker negative trend, and activation noise (s) shows essentially no relationship with decision time, consistent with panel C of Figure 2.
+
 ## Check 2: Observed accuracy vs. predicted P(correct)
 
 ```{r}

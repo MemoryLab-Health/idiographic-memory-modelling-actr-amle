@@ -1,7 +1,7 @@
 Simulation: greedy forward parameter selection
 ================
 Thomas Wilschut
-Last updated: 2026-06-30
+Last updated: 2026-09-02
 
 - [Setup](#setup)
 - [Simulate response data](#simulate-response-data)
@@ -9,6 +9,8 @@ Last updated: 2026-06-30
   likelihood)](#greedy-forward-parameter-selection-c-likelihood)
 - [Greedy fits plot (Figure 4)](#greedy-fits-plot-figure-4)
 - [AIC plot (Figure 3)](#aic-plot-figure-3)
+- [Stepwise decomposition of the AIC plot (for
+  slides)](#stepwise-decomposition-of-the-aic-plot-for-slides)
 - [Session info](#session-info)
 
 This markdown file is can be used to reproduce the results reported in
@@ -325,6 +327,78 @@ p_aic
 ggsave(here::here("output", "greedy_selection_aic.png"), p_aic, width = 8, height = 6)
 ```
 
+# Stepwise decomposition of the AIC plot (for slides)
+
+Export the greedy-selection AIC plot one step at a time, each
+cumulative: step 1 shows only the first winner, step 2 reveals steps
+1–2, etc. The x-axis and y-axis are fixed to the full-data range so
+nothing jumps between slides.
+
+``` r
+dir.create(here::here("output", "greedy_stepwise"), showWarnings = FALSE)
+
+# Full axis ranges (computed from the complete data, kept fixed across steps)
+x_range <- c(1, 5)
+y_range <- range(greedy_summary$total_aic)
+
+n_steps <- max(greedy_summary$step)
+
+for (i in 0:n_steps) {
+  gs_i   <- greedy_summary[step <= i]
+  sp_i   <- selection_path[step <= i]
+  seg_i  <- seg_data[step <= i & !is.na(y_from)]
+
+  p_step <- ggplot() +
+    geom_segment(data = seg_i,
+                 aes(x = step - 1, xend = step, y = y_from, yend = total_aic),
+                 linewidth = 0.4, color = "grey70", linetype = "dashed") +
+    geom_line(data = sp_i,
+              aes(x = step, y = total_aic),
+              linewidth = 1.2, color = "black") +
+    geom_point(data = gs_i[gs_i$selected == FALSE, ],
+               aes(x = step, y = total_aic, color = param_label),
+               size = 3, shape = 16, alpha = 0.5) +
+    geom_point(data = sp_i,
+               aes(x = step, y = total_aic, color = param_label),
+               size = 5, shape = 17) +
+    geom_text(data = sp_i,
+              aes(x = lbl_x, y = lbl_y, label = win_label, hjust = lbl_hjust),
+              vjust = 0, size = 5, lineheight = 0.95, color = "black") +
+    scale_color_manual(name = "Parameter", values = param_cols,
+                       drop = FALSE, limits = names(param_cols)) +
+    scale_y_continuous(trans = sqrt_trans, breaks = aic_breaks) +
+    scale_x_continuous(breaks = 1:5,
+                       limits = x_range,
+                       expand = expansion(mult = c(0.05, 0.18))) +
+    coord_cartesian(ylim = y_range) +
+    labs(x = "Step (parameter added)", y = "AIC") +
+    theme_bw(base_size = 15) +
+    theme(legend.position      = c(0.98, 0.98),
+          legend.justification = c("right", "top"),
+          legend.background    = element_rect(fill = alpha("white", 0.7), color = NA))
+
+  prefix <- sprintf("step_%02d", i)
+  ggsave(here::here("output", "greedy_stepwise", paste0(prefix, "_aic.png")),
+         p_step, width = 8, height = 6, dpi = 150)
+  ggsave(here::here("output", "greedy_stepwise", paste0(prefix, "_aic.svg")),
+         p_step, width = 8, height = 6)
+
+  cat(sprintf("Exported AIC step %d/%d\n", i, n_steps))
+}
+```
+
+    ## Exported AIC step 0/5
+
+    ## Exported AIC step 1/5
+
+    ## Exported AIC step 2/5
+
+    ## Exported AIC step 3/5
+
+    ## Exported AIC step 4/5
+
+    ## Exported AIC step 5/5
+
 # Session info
 
 ``` r
@@ -367,4 +441,5 @@ sessionInfo()
     ## [33] pkgconfig_2.0.3    pillar_1.11.1      gtable_0.3.6       glue_1.8.0        
     ## [37] systemfonts_1.3.1  xfun_0.53          tidyselect_1.2.1   rstudioapi_0.17.1 
     ## [41] knitr_1.50         farver_2.1.2       nlme_3.1-168       htmltools_0.5.8.1 
-    ## [45] labeling_0.4.3     rmarkdown_2.30     compiler_4.5.1     S7_0.2.0
+    ## [45] svglite_2.2.1      labeling_0.4.3     rmarkdown_2.30     compiler_4.5.1    
+    ## [49] S7_0.2.0

@@ -1,7 +1,7 @@
 Example application: parameter contributions to MCI vs HC classification
 ================
 Thomas Wilschut
-Last updated: 2026-06-30
+Last updated: 2026-08-26
 
 - [Setup and helpers](#setup-and-helpers)
   - [Helpers](#helpers)
@@ -19,6 +19,15 @@ Last updated: 2026-06-30
   - [Plot: combined figure (person-average +
     single-session)](#plot-combined-figure-person-average--single-session)
   - [Summary statistics for paper](#summary-statistics-for-paper)
+- [Baseline: classification from raw behavioural features (Reviewer 2,
+  comments 5 &
+  9)](#baseline-classification-from-raw-behavioural-features-reviewer-2-comments-5--9)
+  - [Compute raw behavioural
+    features](#compute-raw-behavioural-features)
+  - [Classification AUC from raw behavioural
+    features](#classification-auc-from-raw-behavioural-features)
+  - [Comparison to the model-based classification
+    result](#comparison-to-the-model-based-classification-result)
 - [Session info](#session-info)
 
 # Setup and helpers
@@ -730,6 +739,120 @@ greedy_auc_single$summary[order(step, -auc_corrected),
     ## 13:     4           s     TRUE         0.837  0.834  0.838
     ## 14:     4         tau    FALSE         0.815  0.810  0.818
     ## 15:     5         tau     TRUE         0.810  0.806  0.813
+
+# Baseline: classification from raw behavioural features (Reviewer 2, comments 5 & 9)
+
+The reviewer asked whether the classification results above (based on
+the fitted ACT-R parameters) outperform a simpler baseline that relies
+on the raw behavioural data directly, e.g. mean accuracy and a few RT
+quantiles. To check this, we compute the same bootstrap-corrected AUC
+(`bootstrap_auc_corrected()`, defined above) using only raw, model-free
+behavioural summary statistics: mean accuracy and RT deciles (the
+10th–90th percentiles of RT), computed at the participant-average level
+to match the paper’s headline classification result (F + $\phi$, AUC =
+.944).
+
+## Compute raw behavioural features
+
+``` r
+rt_deciles <- seq(0.1, 0.9, by = 0.1)
+
+make_quantile_cols <- function(rt, probs) {
+  qs <- quantile(rt, probs)
+  names(qs) <- paste0("rt_q", round(probs * 100))
+  as.list(qs)
+}
+
+# ── Participant-average features (aggregated across all of a participant's sessions) ──
+person_behaviour <- d_filtered[, c(
+  list(mean_accuracy = mean(correct)),
+  make_quantile_cols(rt, rt_deciles)
+), by = user_id]
+
+person_behaviour <- merge(person_behaviour, clinical_df, by = "user_id")
+```
+
+## Classification AUC from raw behavioural features
+
+``` r
+decile_cols <- grep("^rt_q", names(person_behaviour), value = TRUE)
+
+feature_sets <- list(
+  "Accuracy only"                = c("mean_accuracy"),
+  "RT deciles only"               = decile_cols,
+  "Accuracy + RT deciles"         = c("mean_accuracy", decile_cols)
+)
+
+baseline_auc <- function(df, feature_sets, label) {
+  rbindlist(lapply(names(feature_sets), function(nm) {
+    cols <- feature_sets[[nm]]
+    res  <- bootstrap_auc_corrected(df$outcome, df[, ..cols])
+    data.table(
+      aggregation   = label,
+      feature_set   = nm,
+      n_features    = length(cols),
+      auc_apparent  = res$auc_apparent,
+      auc_corrected = res$auc_corrected,
+      auc_lo        = res$auc_lo,
+      auc_hi        = res$auc_hi
+    )
+  }))
+}
+
+baseline_results <- baseline_auc(person_behaviour, feature_sets, "Participant-average")
+
+baseline_results[, `:=`(
+  auc_apparent  = round(auc_apparent, 3),
+  auc_corrected = round(auc_corrected, 3),
+  auc_lo        = round(auc_lo, 3),
+  auc_hi        = round(auc_hi, 3)
+)]
+
+print(baseline_results)
+```
+
+    ##            aggregation           feature_set n_features auc_apparent
+    ##                 <char>                <char>      <int>        <num>
+    ## 1: Participant-average         Accuracy only          1        0.833
+    ## 2: Participant-average       RT deciles only          9        0.957
+    ## 3: Participant-average Accuracy + RT deciles         10        0.975
+    ##    auc_corrected auc_lo auc_hi
+    ##            <num>  <num>  <num>
+    ## 1:         0.833  0.833  0.833
+    ## 2:         0.888  0.786  0.948
+    ## 3:         0.891  0.783  0.961
+
+``` r
+saveRDS(baseline_results, here::here("data", "processed", "fits", "baseline_behaviour_auc_results.rds"))
+```
+
+Note the gap between `auc_apparent` and `auc_corrected` for the
+10-feature model (accuracy + RT deciles): with 10 features predicting
+only 51 outcomes, the bootstrap correction is doing real work to
+counteract overfitting, so the corrected AUC is the one that should be
+compared to the model-based result below, not the apparent one.
+
+## Comparison to the model-based classification result
+
+For reference, the model-based (ACT-R parameter) AUC reported in the
+text for participant averages is F + $\phi$ = .944 (best model),
+decreasing slightly to .930–.926 with further parameters added.
+Comparing this to the raw-behavioural-feature baseline above shows
+whether the fitted parameters provide a classification advantage over
+the raw accuracy/RT summary statistics alone.
+
+``` r
+model_reference <- data.table(
+  aggregation = "Participant-average",
+  model_auc   = 0.944,
+  model_desc  = "F + phi (best step)"
+)
+print(model_reference)
+```
+
+    ##            aggregation model_auc          model_desc
+    ##                 <char>     <num>              <char>
+    ## 1: Participant-average     0.944 F + phi (best step)
 
 # Session info
 
