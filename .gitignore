@@ -1,4 +1,39 @@
-.Rproj.user
+# --- OS files ---
+.DS_Store
+**/.DS_Store
+._*
+Thumbs.db
+desktop.ini
+
+# --- R / RStudio ---
+.Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
+*.Rcheck/
+
+# --- knitr / rmarkdown intermediates ---
+*_cache/
+*.knit.md
+*.utf8.md
+.Rapp.history
+
+# --- Compiled C++ from Rcpp::sourceCpp (R/actr_ll.cpp) ---
+*.o
+*.so
+*.dll
+*.dylib
+
+# --- renv ---
+# renv/.gitignore (created by renv::init) already excludes renv/library and
+# friends. Keep renv.lock, .Rprofile, renv/activate.R and renv/settings.json.
+
+# --- Raw, undistributed data ---
+data/raw/*
+!data/raw/.gitkeep
+
+# --- Editor files ---
+.vscode/
+.idea/
+*~
+*.swp
