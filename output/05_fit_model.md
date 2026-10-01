@@ -361,6 +361,78 @@ ggpairs(session_stats,
 
 ![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/session-stats-filtered-1.png)<!-- -->
 
+Summary statistics of filtered session data:
+
+``` r
+# Number of sessions after filtering:
+session_stats_filtered[, .N, by = clinical_status]
+```
+
+    ##    clinical_status     N
+    ##             <char> <int>
+    ## 1:              HC  1245
+    ## 2:             MCI   816
+
+``` r
+# Number of participants after filtering:
+session_stats_filtered[, .(N = uniqueN(user_id)), by = clinical_status]
+```
+
+    ##    clinical_status     N
+    ##             <char> <int>
+    ## 1:              HC    27
+    ## 2:             MCI    24
+
+``` r
+# Number of sessions per participant after filtering:
+session_stats_filtered[, .N, by = .(user_id, clinical_status)][, .(sessions_mean = mean(N), sessions_sd = sd(N)), by = clinical_status]
+```
+
+    ##    clinical_status sessions_mean sessions_sd
+    ##             <char>         <num>       <num>
+    ## 1:              HC      46.11111     6.02133
+    ## 2:             MCI      34.00000    13.77143
+
+``` r
+# Number of trials per session after filtering:
+session_stats_filtered[, .(trials_mean = mean(trials), trials_sd = sd(trials)), by = clinical_status]
+```
+
+    ##    clinical_status trials_mean trials_sd
+    ##             <char>       <num>     <num>
+    ## 1:              HC    92.73655   33.7705
+    ## 2:             MCI    52.17402   29.4282
+
+``` r
+# Number of repetitions per fact after filtering:
+session_stats_filtered[, .(reps_per_fact_mean = mean(reps_per_fact), reps_per_fact_sd = sd(reps_per_fact)), by = clinical_status]
+```
+
+    ##    clinical_status reps_per_fact_mean reps_per_fact_sd
+    ##             <char>              <num>            <num>
+    ## 1:              HC           6.908353         1.563904
+    ## 2:             MCI           6.343031         1.413173
+
+``` r
+# Number of facts per session after filtering:
+session_stats_filtered[, .(facts_mean = mean(facts), facts_sd = sd(facts)), by = clinical_status]
+```
+
+    ##    clinical_status facts_mean facts_sd
+    ##             <char>      <num>    <num>
+    ## 1:              HC  13.110040 2.984677
+    ## 2:             MCI   8.053922 4.291471
+
+``` r
+# Response accuracy after filtering:
+session_stats_filtered[, .(accuracy_mean = mean(accuracy), accuracy_sd = sd(accuracy)), by = clinical_status]
+```
+
+    ##    clinical_status accuracy_mean accuracy_sd
+    ##             <char>         <num>       <num>
+    ## 1:              HC     0.9466660  0.08464752
+    ## 2:             MCI     0.8527335  0.16089820
+
 # Fit model
 
 The data set is split into sessions, each of which is fitted separately.

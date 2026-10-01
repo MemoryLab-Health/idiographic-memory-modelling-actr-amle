@@ -191,6 +191,30 @@ ggpairs(session_stats,
   scale_fill_manual(values = c(col_blue, col_red))
 ```
 
+Summary statistics of filtered session data:
+```{r}
+# Number of sessions after filtering:
+session_stats_filtered[, .N, by = clinical_status]
+
+# Number of participants after filtering:
+session_stats_filtered[, .(N = uniqueN(user_id)), by = clinical_status]
+
+# Number of sessions per participant after filtering:
+session_stats_filtered[, .N, by = .(user_id, clinical_status)][, .(sessions_mean = mean(N), sessions_sd = sd(N)), by = clinical_status]
+
+# Number of trials per session after filtering:
+session_stats_filtered[, .(trials_mean = mean(trials), trials_sd = sd(trials)), by = clinical_status]
+
+# Number of repetitions per fact after filtering:
+session_stats_filtered[, .(reps_per_fact_mean = mean(reps_per_fact), reps_per_fact_sd = sd(reps_per_fact)), by = clinical_status]
+
+# Number of facts per session after filtering:
+session_stats_filtered[, .(facts_mean = mean(facts), facts_sd = sd(facts)), by = clinical_status]
+
+# Response accuracy after filtering:
+session_stats_filtered[, .(accuracy_mean = mean(accuracy), accuracy_sd = sd(accuracy)), by = clinical_status]
+```
+
 # Fit model
 
 The data set is split into sessions, each of which is fitted separately.
