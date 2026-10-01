@@ -129,7 +129,7 @@ For the refitting analysis we reload the raw per-trial data and apply the same f
 future::plan(future::multisession, workers = future::availableCores() - 1)
 
 source(here::here("R", "sim-mle.R"))
-d <- fread(here::here("data", "processed", "hake2024.csv"))
+d <- fread(here::here("data", "processed", "hake2026.csv"))
 
 min_rt             <- 0.3
 max_rt             <- 15
@@ -637,7 +637,7 @@ The classification results above aggregate each participant's session-level para
 ```{r}
 # Per-session F + phi estimates from the best-performing model (step 2)
 worst_session_fits <- unique(greedy_auc$learner_fits[
-  step == 2 & param_added == "alpha",  # value stays "alpha"; only the column was renamed to phi above
+  step == 2 & param_added == "phi",  # value stays "alpha"; only the column was renamed to phi above
   .(user_id, session_id, clinical_status, phi, F = lf)
 ])
 

@@ -1,7 +1,7 @@
 Example application: parameter contributions to MCI vs HC classification
 ================
 Thomas Wilschut
-Last updated: 2026-08-26
+Last updated: 2026-10-01
 
 - [Setup and helpers](#setup-and-helpers)
   - [Helpers](#helpers)
@@ -19,6 +19,8 @@ Last updated: 2026-08-26
   - [Plot: combined figure (person-average +
     single-session)](#plot-combined-figure-person-average--single-session)
   - [Summary statistics for paper](#summary-statistics-for-paper)
+- [Worst-session vs. mean aggregation (Reviewer 2, comment
+  8)](#worst-session-vs-mean-aggregation-reviewer-2-comment-8)
 - [Baseline: classification from raw behavioural features (Reviewer 2,
   comments 5 &
   9)](#baseline-classification-from-raw-behavioural-features-reviewer-2-comments-5--9)
@@ -140,7 +142,7 @@ s), and code the outcome as MCI = 1 / HC = 0.
 future::plan(future::multisession, workers = future::availableCores() - 1)
 
 source(here::here("R", "sim-mle.R"))
-d <- fread(here::here("data", "processed", "hake2024.csv"))
+d <- fread(here::here("data", "processed", "hake2026.csv"))
 
 min_rt             <- 0.3
 max_rt             <- 15
@@ -340,7 +342,7 @@ p_auc <- ggplot() +
 p_auc
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/06_classification_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/06_classification_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ## Single-session AUC from person-average selection path
 
@@ -603,7 +605,7 @@ p_combined <- (p_auc + ggtitle("Participant average")) +
 p_combined
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/06_classification_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/06_classification_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 # Paper Figure 10: greedy parameter selection by bootstrap-corrected AUC (A: participant average, B: single session)
@@ -740,6 +742,86 @@ greedy_auc_single$summary[order(step, -auc_corrected),
     ## 14:     4         tau    FALSE         0.815  0.810  0.818
     ## 15:     5         tau     TRUE         0.810  0.806  0.813
 
+# Worst-session vs. mean aggregation (Reviewer 2, comment 8)
+
+The classification results above aggregate each participant’s
+session-level parameter estimates by taking their mean. The reviewer
+asked whether using the participant’s worst performance instead (or the
+average of their worst two sessions) might be more sensitive to MCI. To
+check this, we reuse the already-fitted session-level estimates from the
+best-performing model (F + $\phi$, step 2 of the person-average
+selection) and compare four aggregation strategies. No re-fitting is
+required here, since these parameters are already estimated per session;
+only the aggregation across sessions changes.
+
+“Worst” is defined in the direction of the paper’s MCI hypotheses:
+higher $\phi$ (faster forgetting) and higher $F$ (less efficient
+retrieval) are both expected to indicate greater impairment.
+
+``` r
+# Per-session F + phi estimates from the best-performing model (step 2)
+worst_session_fits <- unique(greedy_auc$learner_fits[
+  step == 2 & param_added == "phi",  # value stays "alpha"; only the column was renamed to phi above
+  .(user_id, session_id, clinical_status, phi, F = lf)
+])
+
+agg_mean <- worst_session_fits[, .(phi = mean(phi), F = mean(F)), by = user_id]
+
+agg_worst1 <- worst_session_fits[, .(phi = max(phi), F = max(F)), by = user_id]
+
+agg_worst2 <- worst_session_fits[, .(
+  phi = mean(sort(phi, decreasing = TRUE)[1:min(2, .N)]),
+  F   = mean(sort(F,   decreasing = TRUE)[1:min(2, .N)])
+), by = user_id]
+
+# Single worst session by a combined (z-scored) phi + F severity index, rather
+# than taking each parameter's max independently (possibly from different sessions)
+worst_session_fits_z <- copy(worst_session_fits)
+worst_session_fits_z[, `:=`(phi_z = scale(phi)[, 1], F_z = scale(F)[, 1])]
+worst_session_fits_z[, severity := phi_z + F_z]
+agg_worst_session <- worst_session_fits_z[order(user_id, -severity)][, .SD[1], by = user_id][, .(user_id, phi, F)]
+
+aggregation_strategies <- list(
+  "Mean across sessions (paper)"       = agg_mean,
+  "Worst session, per-parameter max"   = agg_worst1,
+  "Mean of worst 2 sessions"           = agg_worst2,
+  "Single worst session (joint index)" = agg_worst_session
+)
+
+aggregation_results <- rbindlist(lapply(names(aggregation_strategies), function(nm) {
+  df  <- merge(aggregation_strategies[[nm]], clinical_df, by = "user_id")
+  res <- bootstrap_auc_corrected(df$outcome, df[, .(phi, F)])
+  data.table(
+    strategy      = nm,
+    auc_apparent  = round(res$auc_apparent, 3),
+    auc_corrected = round(res$auc_corrected, 3),
+    auc_lo        = round(res$auc_lo, 3),
+    auc_hi        = round(res$auc_hi, 3)
+  )
+}))
+
+print(aggregation_results)
+```
+
+    ##                              strategy auc_apparent auc_corrected auc_lo auc_hi
+    ##                                <char>        <num>         <num>  <num>  <num>
+    ## 1:       Mean across sessions (paper)        0.633         0.613  0.532  0.642
+    ## 2:   Worst session, per-parameter max        0.613         0.576  0.434  0.618
+    ## 3:           Mean of worst 2 sessions        0.631         0.605  0.509  0.639
+    ## 4: Single worst session (joint index)        0.654         0.622  0.502  0.659
+
+``` r
+saveRDS(aggregation_results, here::here("data", "processed", "fits", "worst_session_aggregation_results.rds"))
+```
+
+All three worst-session variants perform worse than simple mean
+aggregation, not better. This is consistent with the low session-level
+reliability reported elsewhere in the paper (ICC = 0.19–0.33 for these
+parameters): a single session’s estimate carries substantial measurement
+noise, and selecting an extreme value across repeated noisy measurements
+tends to amplify that noise rather than isolate genuine impairment,
+whereas averaging suppresses it.
+
 # Baseline: classification from raw behavioural features (Reviewer 2, comments 5 & 9)
 
 The reviewer asked whether the classification results above (based on
@@ -819,8 +901,8 @@ print(baseline_results)
     ##    auc_corrected auc_lo auc_hi
     ##            <num>  <num>  <num>
     ## 1:         0.833  0.833  0.833
-    ## 2:         0.888  0.786  0.948
-    ## 3:         0.891  0.783  0.961
+    ## 2:         0.890  0.795  0.951
+    ## 3:         0.895  0.800  0.962
 
 ``` r
 saveRDS(baseline_results, here::here("data", "processed", "fits", "baseline_behaviour_auc_results.rds"))
@@ -860,13 +942,13 @@ print(model_reference)
 sessionInfo()
 ```
 
-    ## R version 4.5.1 (2025-06-13)
+    ## R version 4.4.3 (2025-02-28)
     ## Platform: aarch64-apple-darwin20
-    ## Running under: macOS Sequoia 15.2
+    ## Running under: macOS 27.0
     ## 
     ## Matrix products: default
-    ## BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
-    ## LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+    ## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRblas.0.dylib 
+    ## LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
     ## 
     ## locale:
     ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -875,24 +957,24 @@ sessionInfo()
     ## tzcode source: internal
     ## 
     ## attached base packages:
-    ## [1] stats     graphics  grDevices utils     datasets  methods   base     
+    ## [1] stats     graphics  grDevices datasets  utils     methods   base     
     ## 
     ## other attached packages:
-    ##  [1] Rcpp_1.1.1-1.1    patchwork_1.3.2   ggsci_4.0.0       pROC_1.19.0.1    
-    ##  [5] furrr_0.3.1       future_1.67.0     lubridate_1.9.4   forcats_1.0.1    
-    ##  [9] stringr_1.5.2     dplyr_1.1.4       purrr_1.1.0       readr_2.1.5      
-    ## [13] tidyr_1.3.1       tibble_3.3.0      ggplot2_4.0.0     tidyverse_2.0.0  
-    ## [17] here_1.0.2        data.table_1.17.8
+    ##  [1] Rcpp_1.1.1        patchwork_1.3.2   ggsci_3.2.0       pROC_1.18.5      
+    ##  [5] furrr_0.3.1       future_1.34.0     lubridate_1.9.4   forcats_1.0.0    
+    ##  [9] stringr_1.5.1     dplyr_1.2.0       purrr_1.0.4       readr_2.1.5      
+    ## [13] tidyr_1.3.1       tibble_3.2.1      ggplot2_4.0.2     tidyverse_2.0.0  
+    ## [17] here_1.0.1        data.table_1.17.0
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] generics_0.1.4     stringi_1.8.7      listenv_0.9.1      hms_1.1.3         
-    ##  [5] digest_0.6.37      magrittr_2.0.4     evaluate_1.0.5     grid_4.5.1        
-    ##  [9] timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0      rprojroot_2.1.1   
-    ## [13] scales_1.4.0       textshaping_1.0.4  codetools_0.2-20   cli_3.6.5         
-    ## [17] rlang_1.1.6        parallelly_1.45.1  withr_3.0.2        yaml_2.3.10       
-    ## [21] tools_4.5.1        parallel_4.5.1     tzdb_0.5.0         globals_0.18.0    
-    ## [25] vctrs_0.6.5        R6_2.6.1           lifecycle_1.0.4    ragg_1.5.0        
-    ## [29] pkgconfig_2.0.3    pillar_1.11.1      gtable_0.3.6       glue_1.8.0        
-    ## [33] systemfonts_1.3.1  xfun_0.53          tidyselect_1.2.1   rstudioapi_0.17.1 
-    ## [37] knitr_1.50         farver_2.1.2       htmltools_0.5.8.1  rmarkdown_2.30    
-    ## [41] compiler_4.5.1     S7_0.2.0
+    ##  [1] generics_0.1.3     renv_1.1.8         stringi_1.8.7      listenv_0.9.1     
+    ##  [5] hms_1.1.3          digest_0.6.37      magrittr_2.0.3     evaluate_1.0.3    
+    ##  [9] grid_4.4.3         timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0     
+    ## [13] rprojroot_2.0.4    plyr_1.8.9         scales_1.4.0       textshaping_1.0.0 
+    ## [17] codetools_0.2-20   cli_3.6.5          rlang_1.1.7        parallelly_1.43.0 
+    ## [21] withr_3.0.2        yaml_2.3.10        tools_4.4.3        parallel_4.4.3    
+    ## [25] tzdb_0.5.0         globals_0.16.3     vctrs_0.7.2        R6_2.6.1          
+    ## [29] lifecycle_1.0.5    ragg_1.3.3         pkgconfig_2.0.3    pillar_1.10.1     
+    ## [33] gtable_0.3.6       glue_1.8.0         systemfonts_1.3.2  xfun_0.51         
+    ## [37] tidyselect_1.2.1   rstudioapi_0.17.1  knitr_1.50         farver_2.1.2      
+    ## [41] htmltools_0.5.8.1  rmarkdown_2.29     compiler_4.4.3     S7_0.2.1

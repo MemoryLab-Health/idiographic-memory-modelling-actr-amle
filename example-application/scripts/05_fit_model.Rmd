@@ -58,7 +58,7 @@ refit_model <- FALSE
 # Load data
 
 ```{r load-data}
-d <- fread(here("data", "processed", "hake2024.csv"))
+d <- fread(here("data", "processed", "hake2026.csv"))
 ```
 
 # Inspect data

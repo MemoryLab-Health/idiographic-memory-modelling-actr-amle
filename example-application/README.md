@@ -8,7 +8,7 @@ Hake et al. showed that clinical status could be recovered from the Speed of For
 
 ## Scripts
 
-4. [`04_prepare_data.R`](./scripts/04_prepare_data.R) — clean and anonymise the raw Hake et al. (2026) data into `data/processed/hake2024.csv`.
+4. [`04_prepare_data.R`](./scripts/04_prepare_data.R) — clean and anonymise the raw Hake et al. (2026) data into `data/processed/hake2026.csv`.
 5. [`05_fit_model.Rmd`](./scripts/05_fit_model.Rmd) — fit the AMLE model per session, producing `data/processed/AMLE_fit.csv` and the model-fit and parameter figures.
 6. [`06_classification.Rmd`](./scripts/06_classification.Rmd) — greedy forward parameter selection by bootstrap-corrected AUC for MCI vs HC classification.
 

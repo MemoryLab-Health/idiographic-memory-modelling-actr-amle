@@ -2,7 +2,7 @@ Idiographic Memory Modelling in ACT-R using Alternating Maximum
 Likelihood Estimation
 ================
 Maarten van der Velde
-Last updated: 2026-06-30
+Last updated: 2026-10-01
 
 - [ACT-R memory model](#act-r-memory-model)
 - [Activation function](#activation-function)
@@ -17,7 +17,7 @@ Last updated: 2026-06-30
 library(here)
 ```
 
-    ## here() starts at /Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle
+    ## here() starts at /Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle
 
 ``` r
 library(data.table)
@@ -71,11 +71,7 @@ library(grid)
 plan(multisession, workers = 8)
 
 source(here("R", "sim-mle.R"))
-```
 
-    ## Warning: package 'Rcpp' was built under R version 4.5.2
-
-``` r
 # Define colours
 col_blue <- "#0571b0"
 col_red <- "#ca0020"
@@ -122,7 +118,7 @@ lines(t, sapply(t, function(t) calculate_activation_memory(t, traces[1:2], .3)),
 lines(t, sapply(t, function(t) calculate_activation_memory(t, traces, .3)), type = "l", col = col_blue, lwd = 2)
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/00_model_walkthrough_files/figure-gfm/activation-example-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/00_model_walkthrough_files/figure-gfm/activation-example-1.png)<!-- -->
 
 # Likelihood functions
 
@@ -146,7 +142,7 @@ plot(a, correct_likelihood(a, tau = -.8, s = .3), type = "l", col = col_blue, lw
 abline(v = -0.8, col = "black", lty = 2)
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/00_model_walkthrough_files/figure-gfm/p-correct-example-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/00_model_walkthrough_files/figure-gfm/p-correct-example-1.png)<!-- -->
 
 ## Response time
 
@@ -171,7 +167,7 @@ for (i in 1:10) {
 }
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/00_model_walkthrough_files/figure-gfm/p-rt-example-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/00_model_walkthrough_files/figure-gfm/p-rt-example-1.png)<!-- -->
 
 # How do parameters map onto behaviour?
 

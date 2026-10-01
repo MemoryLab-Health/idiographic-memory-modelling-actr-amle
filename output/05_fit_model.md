@@ -1,7 +1,7 @@
 Example application: Modelling memory function in MCI and healthy ageing
 ================
 Maarten van der Velde & Thomas Wilschut
-Last updated: 2026-08-26
+Last updated: 2026-10-01
 
 - [Overview](#overview)
 - [Setup](#setup)
@@ -60,7 +60,7 @@ latency factor ($F$) and non-retrieval time ($t_{er}$)).
 library(here)
 ```
 
-    ## here() starts at /Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle
+    ## here() starts at /Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle
 
 ``` r
 library(data.table)
@@ -97,8 +97,6 @@ library(lmerTest)
 ```
 
     ## Loading required package: lme4
-
-    ## Warning: package 'lme4' was built under R version 4.5.2
 
     ## Loading required package: Matrix
 
@@ -142,11 +140,7 @@ library(tidytext)
 plan(multisession, workers = 8)
 
 source(here("R", "sim-mle.R"))
-```
 
-    ## Warning: package 'Rcpp' was built under R version 4.5.2
-
-``` r
 set.seed(2026)
 
 # Define colours
@@ -164,7 +158,7 @@ refit_model <- FALSE
 # Load data
 
 ``` r
-d <- fread(here("data", "processed", "hake2024.csv"))
+d <- fread(here("data", "processed", "hake2026.csv"))
 ```
 
 # Inspect data
@@ -181,20 +175,20 @@ head(d)
 
     ##    user_id clinical_status   session_id lesson_id  fact_id repetition
     ##     <char>          <char>       <char>    <char>   <char>      <int>
-    ## 1: user_01             MCI session_1192 lesson_07 fact_256          1
-    ## 2: user_01             MCI session_1192 lesson_07 fact_256          2
-    ## 3: user_01             MCI session_1192 lesson_07 fact_048          1
-    ## 4: user_01             MCI session_1192 lesson_07 fact_048          2
-    ## 5: user_01             MCI session_1192 lesson_07 fact_604          1
-    ## 6: user_01             MCI session_1192 lesson_07 fact_701          1
+    ## 1: user_01              HC session_0542 lesson_27 fact_792          1
+    ## 2: user_01              HC session_0542 lesson_27 fact_792          2
+    ## 3: user_01              HC session_0542 lesson_27 fact_431          1
+    ## 4: user_01              HC session_0542 lesson_27 fact_431          2
+    ## 5: user_01              HC session_0542 lesson_27 fact_337          1
+    ## 6: user_01              HC session_0542 lesson_27 fact_726          1
     ##    start_time     rt correct session
     ##         <num>  <num>  <lgcl>   <int>
-    ## 1: 1684597178 59.536    TRUE       1
-    ## 2: 1684597238  4.657    TRUE       1
-    ## 3: 1684597244  5.636    TRUE       1
-    ## 4: 1684597250  3.290    TRUE       1
-    ## 5: 1684597255  4.084    TRUE       1
-    ## 6: 1684597259  6.830    TRUE       1
+    ## 1: 1684541713 10.262    TRUE       1
+    ## 2: 1684541724  2.614    TRUE       1
+    ## 3: 1684541728  2.559    TRUE       1
+    ## 4: 1684541731  1.721    TRUE       1
+    ## 5: 1684541734  2.687    TRUE       1
+    ## 6: 1684541737  2.356    TRUE       1
 
 ## Session information
 
@@ -242,18 +236,18 @@ rbind(stats_by_clinical_status, stats_combined)
 
     ##    clinical_status sessions participants mean_trials_per_session
     ##             <char>    <int>        <int>                   <num>
-    ## 1:             MCI      900           24                62.04111
-    ## 2:              HC     1248           27                98.30929
+    ## 1:              HC     1248           27                98.30929
+    ## 2:             MCI      900           24                62.04111
     ## 3:        Combined     2148           51                83.11313
     ##    mean_duration_min mean_reps_per_fact mean_n_facts mean_accuracy
     ##                <num>              <num>        <num>         <num>
-    ## 1:          8.046848           6.135502     10.17111     0.8347306
-    ## 2:          8.019310           6.859941     14.23397     0.9421364
+    ## 1:          8.019310           6.859941     14.23397     0.9421364
+    ## 2:          8.046848           6.135502     10.17111     0.8347306
     ## 3:          8.030849           6.556405     12.53166     0.8971340
     ##    mean_median_rt
     ##             <num>
-    ## 1:       5.972667
-    ## 2:       3.187801
+    ## 1:       3.187801
+    ## 2:       5.972667
     ## 3:       4.354644
 
 The pairwise plots below show how these session characteristics relate
@@ -273,7 +267,7 @@ ggpairs(session_stats,
   scale_fill_manual(values = c(col_blue, col_red))
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/session-stats-correlation-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/session-stats-correlation-1.png)<!-- -->
 
 # Filter data
 
@@ -340,18 +334,18 @@ rbind(stats_by_clinical_status_filtered, stats_combined_filtered)
 
     ##    clinical_status sessions participants mean_trials_per_session
     ##             <char>    <int>        <int>                   <num>
-    ## 1:             MCI      816           24                52.17402
-    ## 2:              HC     1245           27                92.73655
+    ## 1:              HC     1245           27                92.73655
+    ## 2:             MCI      816           24                52.17402
     ## 3:        Combined     2061           51                76.67686
     ##    mean_duration_min mean_reps_per_fact mean_n_facts mean_accuracy
     ##                <num>              <num>        <num>         <num>
-    ## 1:          7.474282           6.343031     8.053922     0.8527335
-    ## 2:          7.897532           6.908353    13.110040     0.9466660
+    ## 1:          7.897532           6.908353    13.110040     0.9466660
+    ## 2:          7.474282           6.343031     8.053922     0.8527335
     ## 3:          7.729957           6.684528    11.108200     0.9094758
     ##    mean_median_rt
     ##             <num>
-    ## 1:       4.835191
-    ## 2:       3.080505
+    ## 1:       3.080505
+    ## 2:       4.835191
     ## 3:       3.775228
 
 ``` r
@@ -365,7 +359,7 @@ ggpairs(session_stats,
   scale_fill_manual(values = c(col_blue, col_red))
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/session-stats-filtered-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/session-stats-filtered-1.png)<!-- -->
 
 # Fit model
 
@@ -550,7 +544,7 @@ ggsave(here("output", "predicted_vs_observed_rt.png"), plot = p_decile_rt, width
 p_decile_rt
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/decile-plots-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/decile-plots-1.png)<!-- -->
 
 ### Correlation between predicted and observed RT
 
@@ -577,7 +571,7 @@ ggsave(here("output", "predicted_vs_observed_rt_correlation_dist.png"), plot = p
 p_rt_corr
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/correlation-rt-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/correlation-rt-1.png)<!-- -->
 
 Combined version of these RT fit plots:
 
@@ -588,7 +582,7 @@ p_rt_corr + p_decile_rt  +
   theme(plot.tag = element_text(face = "bold", size = 14))
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/rt-fit-plots-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/rt-fit-plots-1.png)<!-- -->
 
 ``` r
 # Paper Figure 8: RT model fit, panels A (correlation distribution) + B (decile plots) combined
@@ -627,83 +621,83 @@ fit_comparison[order(-delta_r)]
 
     ##     user_id    r_full n_full r_trimmed n_trimmed       delta_r
     ##      <char>     <num>  <int>     <num>     <int>         <num>
-    ##  1: user_25 0.5796520     24 0.6752034        21  0.0955513452
-    ##  2: user_40 0.5967531   2361 0.6231875      2125  0.0264344594
-    ##  3: user_34 0.6394074     48 0.6584813        43  0.0190739138
-    ##  4: user_36 0.6250837   1789 0.6396559      1610  0.0145721546
-    ##  5: user_31 0.5673024   1060 0.5798171       954  0.0125147213
-    ##  6: user_11 0.6562916   2973 0.6674212      2675  0.0111295987
-    ##  7: user_50 0.6512656    883 0.6616029       794  0.0103373541
-    ##  8: user_09 0.6783040    916 0.6846818       824  0.0063777185
-    ##  9: user_29 0.5934304    340 0.5990364       306  0.0056060344
-    ## 10: user_48 0.6817695   1022 0.6861266       919  0.0043570881
-    ## 11: user_02 0.6454794   2920 0.6461364      2628  0.0006570083
-    ## 12: user_06 0.6116844   1301 0.6085089      1171 -0.0031754987
-    ## 13: user_15 0.6113008   1612 0.6081060      1450 -0.0031947268
-    ## 14: user_49 0.7046228   1718 0.6947182      1546 -0.0099045830
-    ## 15: user_46 0.6430686   5443 0.6316959      4899 -0.0113726863
-    ## 16: user_23 0.6943869    955 0.6802492       859 -0.0141377324
-    ## 17: user_16 0.6377786    792 0.6170263       712 -0.0207522370
-    ## 18: user_45 0.7029566   1165 0.6805405      1048 -0.0224161669
-    ## 19: user_07 0.6712325   3646 0.6468043      3282 -0.0244282457
-    ## 20: user_51 0.6458696   4078 0.6201994      3670 -0.0256701762
-    ## 21: user_39 0.6752750   3097 0.6490866      2787 -0.0261883478
-    ## 22: user_20 0.7132430   3716 0.6869364      3345 -0.0263065665
-    ## 23: user_22 0.7274382   1852 0.7002032      1666 -0.0272350205
-    ## 24: user_13 0.6191569   4660 0.5917080      4194 -0.0274488670
-    ## 25: user_19 0.6597304   2574 0.6290935      2316 -0.0306369172
-    ## 26: user_01 0.7477200    190 0.7162611       171 -0.0314589033
-    ## 27: user_18 0.7257713   2321 0.6940681      2089 -0.0317032521
-    ## 28: user_47 0.6339502   4628 0.6019475      4166 -0.0320026720
-    ## 29: user_43 0.6887257   2570 0.6551978      2313 -0.0335278991
-    ## 30: user_28 0.6571311    964 0.6216541       867 -0.0354769952
-    ## 31: user_03 0.6413045   1370 0.6047900      1233 -0.0365144402
-    ## 32: user_21 0.6538783   2976 0.6165292      2678 -0.0373490713
-    ## 33: user_10 0.6468807    530 0.6083245       477 -0.0385562781
-    ## 34: user_08 0.6747970   3340 0.6358806      3006 -0.0389164147
-    ## 35: user_38 0.6837150   3246 0.6425794      2921 -0.0411355879
-    ## 36: user_42 0.6136428   1356 0.5720659      1220 -0.0415769337
-    ## 37: user_33 0.6575508   4035 0.6155602      3631 -0.0419905161
-    ## 38: user_44 0.6450282   3550 0.6018916      3195 -0.0431366386
-    ## 39: user_41 0.6464601   3150 0.6030679      2836 -0.0433921812
-    ## 40: user_26 0.6344379   3524 0.5878927      3172 -0.0465452421
-    ## 41: user_05 0.7502900   3770 0.7013410      3394 -0.0489489534
-    ## 42: user_37 0.6372826   3795 0.5877752      3415 -0.0495074679
-    ## 43: user_27 0.6445631   2417 0.5894466      2175 -0.0551164845
-    ## 44: user_04 0.7158831    627 0.6605980       564 -0.0552850782
-    ## 45: user_12 0.6525363   3967 0.5945122      3570 -0.0580241157
-    ## 46: user_14 0.6526077   1343 0.5807782      1208 -0.0718295119
-    ## 47: user_32 0.7001516   5106 0.6249710      4595 -0.0751806009
-    ## 48: user_30 0.6689998   2460 0.5912676      2214 -0.0777321871
-    ## 49: user_35 0.6673340   5056 0.5882269      4550 -0.0791070616
-    ## 50: user_17 0.6449651   6068 0.5536140      5461 -0.0913510541
-    ## 51: user_24 0.9657235     12 0.7770717        10 -0.1886518318
+    ##  1: user_20 0.4071270     24 0.5656807        21  0.1585536633
+    ##  2: user_51 0.6022564     48 0.6354212        43  0.0331647431
+    ##  3: user_09 0.5780087   2361 0.6062179      2125  0.0282092105
+    ##  4: user_28 0.6492239   1022 0.6594712       919  0.0102473501
+    ##  5: user_14 0.6464465   2973 0.6552892      2675  0.0088427087
+    ##  6: user_24 0.5338910   1060 0.5415171       954  0.0076261704
+    ##  7: user_10 0.6086260   1789 0.6161275      1610  0.0075015250
+    ##  8: user_04 0.6077687    916 0.6132272       824  0.0054584985
+    ##  9: user_02 0.6374984   2920 0.6372197      2628 -0.0002787703
+    ## 10: user_13 0.5885349    340 0.5881790       306 -0.0003559468
+    ## 11: user_44 0.5866914    883 0.5837316       794 -0.0029598004
+    ## 12: user_25 0.6098147   1301 0.6067291      1171 -0.0030856304
+    ## 13: user_16 0.6654788    955 0.6542200       859 -0.0112588489
+    ## 14: user_36 0.6423193   5443 0.6298134      4899 -0.0125058356
+    ## 15: user_18 0.6852600   1165 0.6654976      1048 -0.0197624412
+    ## 16: user_06 0.6587504   3646 0.6375895      3282 -0.0211609078
+    ## 17: user_21 0.6886646   1718 0.6643735      1546 -0.0242910572
+    ## 18: user_46 0.6141926   4660 0.5897921      4194 -0.0244004610
+    ## 19: user_07 0.6103044   3524 0.5844271      3172 -0.0258773913
+    ## 20: user_30 0.6344944   3097 0.6083222      2787 -0.0261721640
+    ## 21: user_50 0.5752118   1612 0.5479448      1450 -0.0272670337
+    ## 22: user_48 0.7071660   2321 0.6783753      2089 -0.0287907541
+    ## 23: user_08 0.6529430   2574 0.6238154      2316 -0.0291275924
+    ## 24: user_31 0.6333221   3340 0.6035081      3006 -0.0298140002
+    ## 25: user_01 0.6983662   3716 0.6673614      3345 -0.0310047859
+    ## 26: user_32 0.6310941   4628 0.5984536      4166 -0.0326404932
+    ## 27: user_49 0.6681513   2570 0.6347846      2313 -0.0333667016
+    ## 28: user_42 0.7089256    190 0.6720602       171 -0.0368653840
+    ## 29: user_15 0.6301496   4078 0.5922436      3670 -0.0379059250
+    ## 30: user_39 0.7131172   1852 0.6742220      1666 -0.0388952068
+    ## 31: user_45 0.6484373    964 0.6084808       867 -0.0399564585
+    ## 32: user_22 0.6802910   3246 0.6397725      2921 -0.0405184788
+    ## 33: user_27 0.6367628   1370 0.5959586      1233 -0.0408041578
+    ## 34: user_43 0.6375942   2976 0.5965186      2678 -0.0410755773
+    ## 35: user_41 0.6073341    792 0.5659455       712 -0.0413886177
+    ## 36: user_47 0.6499310   4035 0.6063503      3631 -0.0435807352
+    ## 37: user_29 0.6427888   3150 0.5989362      2836 -0.0438525946
+    ## 38: user_33 0.7209554   3770 0.6766442      3394 -0.0443111171
+    ## 39: user_37 0.6418711   3550 0.5967924      3195 -0.0450787344
+    ## 40: user_19 0.6284815    530 0.5783275       477 -0.0501539961
+    ## 41: user_40 0.6163903   3795 0.5659153      3415 -0.0504750125
+    ## 42: user_38 0.5924318   1356 0.5383840      1220 -0.0540478078
+    ## 43: user_34 0.6476607   3967 0.5883818      3570 -0.0592788461
+    ## 44: user_35 0.6281997   2417 0.5650161      2175 -0.0631836530
+    ## 45: user_03 0.6809980    627 0.6136500       564 -0.0673480008
+    ## 46: user_12 0.6507343   1343 0.5696723      1208 -0.0810619708
+    ## 47: user_17 0.6597748   2460 0.5756796      2214 -0.0840951805
+    ## 48: user_26 0.6612462   5056 0.5741138      4550 -0.0871324821
+    ## 49: user_23 0.6996887   5106 0.6104032      4595 -0.0892854862
+    ## 50: user_11 0.6426657   6068 0.5490136      5461 -0.0936521029
+    ## 51: user_05 0.8463578     12 0.1451167        10 -0.7012410202
     ##     user_id    r_full n_full r_trimmed n_trimmed       delta_r
 
 ``` r
 cat(sprintf("Mean r (full data):         %.3f\n", mean(fit_comparison$r_full)))
 ```
 
-    ## Mean r (full data):         0.664
+    ## Mean r (full data):         0.641
 
 ``` r
 cat(sprintf("Mean r (top decile excl.):  %.3f\n", mean(fit_comparison$r_trimmed)))
 ```
 
-    ## Mean r (top decile excl.):  0.635
+    ## Mean r (top decile excl.):  0.600
 
 ``` r
 cat(sprintf("Mean change (delta r):      %.3f\n", mean(fit_comparison$delta_r)))
 ```
 
-    ## Mean change (delta r):      -0.029
+    ## Mean change (delta r):      -0.041
 
 ``` r
 cat(sprintf("Participants where fit improved after exclusion: %d / %d\n",
             sum(fit_comparison$delta_r > 0), nrow(fit_comparison)))
 ```
 
-    ## Participants where fit improved after exclusion: 11 / 51
+    ## Participants where fit improved after exclusion: 8 / 51
 
 ``` r
 wilcox.test(fit_comparison$r_trimmed, fit_comparison$r_full, paired = TRUE)
@@ -713,7 +707,7 @@ wilcox.test(fit_comparison$r_trimmed, fit_comparison$r_full, paired = TRUE)
     ##  Wilcoxon signed rank test with continuity correction
     ## 
     ## data:  fit_comparison$r_trimmed and fit_comparison$r_full
-    ## V = 142, p-value = 1.067e-06
+    ## V = 129, p-value = 5.711e-07
     ## alternative hypothesis: true location shift is not equal to 0
 
 Excluding the top RT decile does not improve the correspondence between
@@ -759,17 +753,17 @@ ggplot(d_preds_both, aes(x = rt, fill = clinical_status)) +
          alpha = guide_legend(override.aes = list(fill = "grey20")))
 ```
 
-    ## Warning: Removed 13 rows containing non-finite outside the scale range
+    ## Warning: Removed 7 rows containing non-finite outside the scale range
     ## (`stat_density()`).
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/rt-distribution-full-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/rt-distribution-full-1.png)<!-- -->
 
 ``` r
 # Paper Figure 7: predicted vs observed RT density per participant (negative RTs = incorrect)
 ggsave(here("output", "predicted_vs_observed_rt_density.png"), width = 10, height = 8.5)
 ```
 
-    ## Warning: Removed 13 rows containing non-finite outside the scale range
+    ## Warning: Removed 7 rows containing non-finite outside the scale range
     ## (`stat_density()`).
 
 ## Estimated parameters
@@ -800,7 +794,7 @@ ggplot(fit_amle_long, aes(x = session_aligned, y = value, colour = clinical_stat
   theme(legend.position = "bottom")
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-over-time-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-over-time-1.png)<!-- -->
 
 ### Relationship to session properties
 
@@ -820,7 +814,7 @@ ggplot(fit_amle_long, aes(x = session_trials, y = value)) +
 
     ## `geom_smooth()` using formula = 'y ~ s(x, bs = "cs")'
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-1.png)<!-- -->
 
 ``` r
 ggplot(fit_amle_long, aes(x = facts, y = value)) +
@@ -832,7 +826,7 @@ ggplot(fit_amle_long, aes(x = facts, y = value)) +
 
     ## `geom_smooth()` using formula = 'y ~ s(x, bs = "cs")'
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-2.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-2.png)<!-- -->
 
 ``` r
 ggplot(fit_amle_long, aes(x = session_errors, y = value)) +
@@ -844,7 +838,7 @@ ggplot(fit_amle_long, aes(x = session_errors, y = value)) +
 
     ## `geom_smooth()` using formula = 'y ~ s(x, bs = "cs")'
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-3.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-3.png)<!-- -->
 
 ``` r
 ggplot(fit_amle_long, aes(x = session_accuracy, y = value)) +
@@ -856,7 +850,7 @@ ggplot(fit_amle_long, aes(x = session_accuracy, y = value)) +
 
     ## `geom_smooth()` using formula = 'y ~ s(x, bs = "cs")'
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-4.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-4.png)<!-- -->
 
 ``` r
 ggplot(fit_amle_long, aes(x = median_rt, y = value)) +
@@ -868,7 +862,7 @@ ggplot(fit_amle_long, aes(x = median_rt, y = value)) +
 
     ## `geom_smooth()` using formula = 'y ~ s(x, bs = "cs")'
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-5.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-session-stats-5.png)<!-- -->
 
 ### Stability over time
 
@@ -915,79 +909,79 @@ for (param in fit_amle_long[, unique(variable)]) {
 
     ## [1] "Parameter: phi"
     ##                          type       ICC        F df1  df2             p
-    ## Single_raters_absolute   ICC1 0.2797114 23.52328  50 2907 5.932489e-176
-    ## Single_random_raters     ICC2 0.2815072 29.45048  50 2850 1.018702e-217
-    ## Single_fixed_raters      ICC3 0.3290957 29.45048  50 2850 1.018702e-217
-    ## Average_raters_absolute ICC1k 0.9574889 23.52328  50 2907 5.932489e-176
-    ## Average_random_raters   ICC2k 0.9578495 29.45048  50 2850 1.018702e-217
-    ## Average_fixed_raters    ICC3k 0.9660447 29.45048  50 2850 1.018702e-217
+    ## Single_raters_absolute   ICC1 0.3542931 32.82403  50 2907 1.072372e-241
+    ## Single_random_raters     ICC2 0.3558425 41.87085  50 2850 1.561222e-298
+    ## Single_fixed_raters      ICC3 0.4133761 41.87085  50 2850 1.561222e-298
+    ## Average_raters_absolute ICC1k 0.9695345 32.82403  50 2907 1.072372e-241
+    ## Average_random_raters   ICC2k 0.9697337 41.87085  50 2850 1.561222e-298
+    ## Average_fixed_raters    ICC3k 0.9761170 41.87085  50 2850 1.561222e-298
     ##                         lower bound upper bound
-    ## Single_raters_absolute    0.2098333   0.3793249
-    ## Single_random_raters      0.2106851   0.3818540
-    ## Single_fixed_raters       0.2519361   0.4348774
-    ## Average_raters_absolute   0.9390327   0.9725626
-    ## Average_random_raters     0.9393257   0.9728475
-    ## Average_fixed_raters      0.9512991   0.9780858
+    ## Single_raters_absolute    0.2739784   0.4622514
+    ## Single_random_raters      0.2741194   0.4648007
+    ## Single_fixed_raters       0.3270933   0.5241126
+    ## Average_raters_absolute   0.9563079   0.9803371
+    ## Average_random_raters     0.9563375   0.9805337
+    ## Average_fixed_raters      0.9657455   0.9845864
     ## [1] "Parameter: tau"
-    ##                          type       ICC        F df1  df2             p
-    ## Single_raters_absolute   ICC1 0.1817292 13.88118  50 2907 8.139753e-101
-    ## Single_random_raters     ICC2 0.1821611 14.42101  50 2850 5.797887e-105
-    ## Single_fixed_raters      ICC3 0.1879140 14.42101  50 2850 5.797887e-105
-    ## Average_raters_absolute ICC1k 0.9279600 13.88118  50 2907 8.139753e-101
-    ## Average_random_raters   ICC2k 0.9281537 14.42101  50 2850 5.797887e-105
-    ## Average_fixed_raters    ICC3k 0.9306567 14.42101  50 2850 5.797887e-105
+    ##                          type       ICC        F df1  df2            p
+    ## Single_raters_absolute   ICC1 0.1368192 10.19334  50 2907 2.700483e-70
+    ## Single_random_raters     ICC2 0.1369941 10.33404  50 2850 2.420844e-71
+    ## Single_fixed_raters      ICC3 0.1386229 10.33404  50 2850 2.420844e-71
+    ## Average_raters_absolute ICC1k 0.9018967 10.19334  50 2907 2.700483e-70
+    ## Average_random_raters   ICC2k 0.9020276 10.33404  50 2850 2.420844e-71
+    ## Average_fixed_raters    ICC3k 0.9032325 10.33404  50 2850 2.420844e-71
     ##                         lower bound upper bound
-    ## Single_raters_absolute    0.1301612   0.2612152
-    ## Single_random_raters      0.1306210   0.2615974
-    ## Single_fixed_raters       0.1350336   0.2690142
-    ## Average_raters_absolute   0.8966838   0.9535042
-    ## Average_random_raters     0.8970588   0.9535919
-    ## Average_fixed_raters      0.9005433   0.9552471
+    ## Single_raters_absolute   0.09527075   0.2032247
+    ## Single_random_raters     0.09546071   0.2033761
+    ## Single_fixed_raters      0.09664512   0.2056130
+    ## Average_raters_absolute  0.85930508   0.9366825
+    ## Average_random_raters    0.85957108   0.9367379
+    ## Average_fixed_raters     0.86120962   0.9375479
     ## [1] "Parameter: s"
     ##                          type        ICC        F df1  df2            p
-    ## Single_raters_absolute   ICC1 0.05813699 4.580081  50 2907 1.420235e-23
-    ## Single_random_raters     ICC2 0.05936011 4.978744  50 2850 9.428956e-27
-    ## Single_fixed_raters      ICC3 0.06419531 4.978744  50 2850 9.428956e-27
-    ## Average_raters_absolute ICC1k 0.78166323 4.580081  50 2907 1.420235e-23
-    ## Average_random_raters   ICC2k 0.78541481 4.978744  50 2850 9.428956e-27
-    ## Average_fixed_raters    ICC3k 0.79914615 4.978744  50 2850 9.428956e-27
+    ## Single_raters_absolute   ICC1 0.04414278 3.678518  50 2907 1.535741e-16
+    ## Single_random_raters     ICC2 0.04528350 3.966058  50 2850 9.950082e-19
+    ## Single_fixed_raters      ICC3 0.04865098 3.966058  50 2850 9.950082e-19
+    ## Average_raters_absolute ICC1k 0.72815141 3.678518  50 2907 1.535741e-16
+    ## Average_random_raters   ICC2k 0.73340574 3.966058  50 2850 9.950082e-19
+    ## Average_fixed_raters    ICC3k 0.74786050 3.966058  50 2850 9.950082e-19
     ##                         lower bound upper bound
-    ## Single_raters_absolute   0.03644214  0.09511176
-    ## Single_random_raters     0.03768556  0.09628864
-    ## Single_fixed_raters      0.04086707  0.10375445
-    ## Average_raters_absolute  0.68687210  0.85908175
-    ## Average_random_raters    0.69431671  0.86072005
-    ## Average_fixed_raters     0.71192219  0.87037243
+    ## Single_raters_absolute   0.02627292  0.07495194
+    ## Single_random_raters     0.02743643  0.07604736
+    ## Single_fixed_raters      0.02953588  0.08148325
+    ## Average_raters_absolute  0.61012806  0.82454431
+    ## Average_random_raters    0.62066675  0.82680325
+    ## Average_fixed_raters     0.63836493  0.83727356
     ## [1] "Parameter: lf"
     ##                          type       ICC        F df1  df2             p
-    ## Single_raters_absolute   ICC1 0.2819062 23.76939  50 2907 8.924254e-178
-    ## Single_random_raters     ICC2 0.2823132 24.91031  50 2850 1.636827e-185
-    ## Single_fixed_raters      ICC3 0.2919084 24.91031  50 2850 1.636827e-185
-    ## Average_raters_absolute ICC1k 0.9579291 23.76939  50 2907 8.924254e-178
-    ## Average_random_raters   ICC2k 0.9580100 24.91031  50 2850 1.636827e-185
-    ## Average_fixed_raters    ICC3k 0.9598560 24.91031  50 2850 1.636827e-185
+    ## Single_raters_absolute   ICC1 0.3865688 37.55014  50 2907 8.501447e-273
+    ## Single_random_raters     ICC2 0.3869407 39.83471  50 2850 5.879037e-286
+    ## Single_fixed_raters      ICC3 0.4010412 39.83471  50 2850 5.879037e-286
+    ## Average_raters_absolute ICC1k 0.9733689 37.55014  50 2907 8.501447e-273
+    ## Average_random_raters   ICC2k 0.9734096 39.83471  50 2850 5.879037e-286
+    ## Average_fixed_raters    ICC3k 0.9748963 39.83471  50 2850 5.879037e-286
     ##                         lower bound upper bound
-    ## Single_raters_absolute    0.2116764   0.3818474
-    ## Single_random_raters      0.2121007   0.3822091
-    ## Single_fixed_raters       0.2200945   0.3932911
-    ## Average_raters_absolute   0.9396640   0.9728467
-    ## Average_random_raters     0.9398079   0.9728872
-    ## Average_fixed_raters      0.9424228   0.9740917
+    ## Single_raters_absolute    0.3027408   0.4964389
+    ## Single_random_raters      0.3030866   0.4967933
+    ## Single_fixed_raters       0.3158246   0.5114663
+    ## Average_raters_absolute   0.9618070   0.9828119
+    ## Average_random_raters     0.9618672   0.9828358
+    ## Average_fixed_raters      0.9639946   0.9837985
     ## [1] "Parameter: ter"
-    ##                          type       ICC        F df1  df2            p
-    ## Single_raters_absolute   ICC1 0.1696807 12.85264  50 2907 2.190401e-92
-    ## Single_random_raters     ICC2 0.1703644 13.63776  50 2850 1.325333e-98
-    ## Single_fixed_raters      ICC3 0.1789094 13.63776  50 2850 1.325333e-98
-    ## Average_raters_absolute ICC1k 0.9221950 12.85264  50 2907 2.190401e-92
-    ## Average_random_raters   ICC2k 0.9225419 13.63776  50 2850 1.325333e-98
-    ## Average_fixed_raters    ICC3k 0.9266742 13.63776  50 2850 1.325333e-98
+    ##                          type       ICC        F df1  df2             p
+    ## Single_raters_absolute   ICC1 0.1775404 13.52018  50 2907  7.263695e-98
+    ## Single_random_raters     ICC2 0.1781657 14.28673  50 2850 7.085058e-104
+    ## Single_fixed_raters      ICC3 0.1863843 14.28673  50 2850 7.085058e-104
+    ## Average_raters_absolute ICC1k 0.9260365 13.52018  50 2907  7.263695e-98
+    ## Average_random_raters   ICC2k 0.9263289 14.28673  50 2850 7.085058e-104
+    ## Average_fixed_raters    ICC3k 0.9300050 14.28673  50 2850 7.085058e-104
     ##                         lower bound upper bound
-    ## Single_raters_absolute    0.1207038   0.2459081
-    ## Single_random_raters      0.1214064   0.2465420
-    ## Single_fixed_raters       0.1279314   0.2576597
-    ## Average_raters_absolute   0.8884159   0.9497833
-    ## Average_random_raters     0.8890688   0.9499460
-    ## Average_fixed_raters      0.8948313   0.9526768
+    ## Single_raters_absolute    0.1268651   0.2559141
+    ## Single_random_raters      0.1275116   0.2564884
+    ## Single_fixed_raters       0.1338242   0.2670922
+    ## Average_raters_absolute   0.8939252   0.9522627
+    ## Average_random_raters     0.8944761   0.9523995
+    ## Average_fixed_raters      0.8996085   0.9548264
 
 ### Average estimated parameters
 
@@ -1018,145 +1012,145 @@ for (param in fit_amle_long[, unique(variable)]) {
     ## Formula: value ~ clinical_status + (1 | user_id) + (1 | lesson_id)
     ##    Data: fit_amle_long[variable == param]
     ## 
-    ## REML criterion at convergence: -557
+    ## REML criterion at convergence: -2255.9
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -4.0822 -0.5925  0.0084  0.6064  3.5638 
+    ## -4.7731 -0.5145  0.0588  0.5711  4.8737 
     ## 
     ## Random effects:
     ##  Groups    Name        Variance Std.Dev.
-    ##  lesson_id (Intercept) 0.009834 0.09917 
-    ##  user_id   (Intercept) 0.016955 0.13021 
-    ##  Residual              0.039010 0.19751 
+    ##  lesson_id (Intercept) 0.004656 0.06823 
+    ##  user_id   (Intercept) 0.011197 0.10582 
+    ##  Residual              0.016896 0.12999 
     ## Number of obs: 2061, groups:  lesson_id, 58; user_id, 51
     ## 
     ## Fixed effects:
     ##                    Estimate Std. Error       df t value Pr(>|t|)    
-    ## (Intercept)         0.44549    0.02892 70.26385  15.406   <2e-16 ***
-    ## clinical_statusMCI  0.10009    0.03800 48.98441   2.634   0.0113 *  
+    ## (Intercept)         0.33378    0.02262 64.70634  14.753   <2e-16 ***
+    ## clinical_statusMCI  0.05926    0.03050 48.71138   1.943   0.0579 .  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## clncl_stMCI -0.602
+    ## clncl_stMCI -0.622
     ## [1] "Parameter: tau"
     ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
     ## lmerModLmerTest]
     ## Formula: value ~ clinical_status + (1 | user_id) + (1 | lesson_id)
     ##    Data: fit_amle_long[variable == param]
     ## 
-    ## REML criterion at convergence: 6243.1
+    ## REML criterion at convergence: 1462.9
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -2.7545 -0.6355  0.1027  0.6479  3.1016 
+    ## -1.6908 -0.4357 -0.2300 -0.0554  5.5142 
     ## 
     ## Random effects:
     ##  Groups    Name        Variance Std.Dev.
-    ##  lesson_id (Intercept) 0.04336  0.2082  
-    ##  user_id   (Intercept) 0.26237  0.5122  
-    ##  Residual              1.11622  1.0565  
+    ##  lesson_id (Intercept) 0.001534 0.03917 
+    ##  user_id   (Intercept) 0.017490 0.13225 
+    ##  Residual              0.111825 0.33440 
     ## Number of obs: 2061, groups:  lesson_id, 58; user_id, 51
     ## 
     ## Fixed effects:
     ##                    Estimate Std. Error       df t value Pr(>|t|)    
-    ## (Intercept)        -2.81020    0.10700 53.12112  -26.26   <2e-16 ***
-    ## clinical_statusMCI  0.06301    0.15354 49.20540    0.41    0.683    
+    ## (Intercept)        -1.85616    0.02773 49.40908 -66.937   <2e-16 ***
+    ## clinical_statusMCI  0.06003    0.04070 49.31438   1.475    0.147    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## clncl_stMCI -0.648
+    ## clncl_stMCI -0.656
     ## [1] "Parameter: s"
     ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
     ## lmerModLmerTest]
     ## Formula: value ~ clinical_status + (1 | user_id) + (1 | lesson_id)
     ##    Data: fit_amle_long[variable == param]
     ## 
-    ## REML criterion at convergence: -4440
+    ## REML criterion at convergence: -4525.8
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -3.7862 -0.6068 -0.0442  0.5618  3.2404 
+    ## -3.9917 -0.6217 -0.0680  0.5644  3.0984 
     ## 
     ## Random effects:
     ##  Groups    Name        Variance  Std.Dev.
-    ##  lesson_id (Intercept) 0.0005470 0.02339 
-    ##  user_id   (Intercept) 0.0004478 0.02116 
-    ##  Residual              0.0062825 0.07926 
+    ##  lesson_id (Intercept) 0.0004744 0.02178 
+    ##  user_id   (Intercept) 0.0002878 0.01696 
+    ##  Residual              0.0060791 0.07797 
     ## Number of obs: 2061, groups:  lesson_id, 58; user_id, 51
     ## 
     ## Fixed effects:
     ##                     Estimate Std. Error        df t value Pr(>|t|)    
-    ## (Intercept)         0.307922   0.005637 65.220406  54.626   <2e-16 ***
-    ## clinical_statusMCI -0.002177   0.007065 41.960155  -0.308     0.76    
+    ## (Intercept)         0.289396   0.004935 68.710244  58.640   <2e-16 ***
+    ## clinical_statusMCI  0.009119   0.006033 44.396338   1.512    0.138    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## clncl_stMCI -0.548
+    ## clncl_stMCI -0.528
     ## [1] "Parameter: lf"
     ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
     ## lmerModLmerTest]
     ## Formula: value ~ clinical_status + (1 | user_id) + (1 | lesson_id)
     ##    Data: fit_amle_long[variable == param]
     ## 
-    ## REML criterion at convergence: 4972.7
+    ## REML criterion at convergence: 4505.7
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -3.6399 -0.4359 -0.1434  0.2005  5.7041 
+    ## -3.2252 -0.4193 -0.1252  0.1772  5.9236 
     ## 
     ## Random effects:
     ##  Groups    Name        Variance Std.Dev.
-    ##  lesson_id (Intercept) 0.02856  0.1690  
-    ##  user_id   (Intercept) 0.21026  0.4585  
-    ##  Residual              0.59503  0.7714  
+    ##  lesson_id (Intercept) 0.02851  0.1688  
+    ##  user_id   (Intercept) 0.24813  0.4981  
+    ##  Residual              0.46811  0.6842  
     ## Number of obs: 2061, groups:  lesson_id, 58; user_id, 51
     ## 
     ## Fixed effects:
-    ##                    Estimate Std. Error       df t value Pr(>|t|)    
-    ## (Intercept)         0.65700    0.09386 51.67009   6.999 5.12e-09 ***
-    ## clinical_statusMCI  0.40363    0.13482 48.10432   2.994  0.00434 ** 
+    ##                    Estimate Std. Error      df t value Pr(>|t|)    
+    ## (Intercept)          0.9005     0.1005 50.8905   8.958 4.88e-12 ***
+    ## clinical_statusMCI   0.5343     0.1444 47.6637   3.699 0.000559 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## clncl_stMCI -0.655
+    ## clncl_stMCI -0.660
     ## [1] "Parameter: ter"
     ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
     ## lmerModLmerTest]
     ## Formula: value ~ clinical_status + (1 | user_id) + (1 | lesson_id)
     ##    Data: fit_amle_long[variable == param]
     ## 
-    ## REML criterion at convergence: 3607.6
+    ## REML criterion at convergence: 3791.4
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -3.6768 -0.3481  0.0429  0.3994  6.5970 
+    ## -3.3508 -0.3877  0.0749  0.4269  6.5280 
     ## 
     ## Random effects:
     ##  Groups    Name        Variance Std.Dev.
-    ##  lesson_id (Intercept) 0.01886  0.1373  
-    ##  user_id   (Intercept) 0.04955  0.2226  
-    ##  Residual              0.31051  0.5572  
+    ##  lesson_id (Intercept) 0.01910  0.1382  
+    ##  user_id   (Intercept) 0.06319  0.2514  
+    ##  Residual              0.33887  0.5821  
     ## Number of obs: 2061, groups:  lesson_id, 58; user_id, 51
     ## 
     ## Fixed effects:
     ##                    Estimate Std. Error       df t value Pr(>|t|)    
-    ## (Intercept)         1.13472    0.04940 53.84482   22.97  < 2e-16 ***
-    ## clinical_statusMCI  0.27161    0.06842 44.21413    3.97 0.000261 ***
+    ## (Intercept)         1.01385    0.05453 51.32164  18.592  < 2e-16 ***
+    ## clinical_statusMCI  0.23479    0.07642 43.70536   3.072  0.00365 ** 
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## clncl_stMCI -0.620
+    ## clncl_stMCI -0.630
 
 ### Correlation
 
@@ -1347,7 +1341,7 @@ p_param_estimates <- ggplot() +
 
     ## Warning: The `label.size` argument of `geom_label()` is deprecated as of ggplot2 3.5.0.
     ## ℹ Please use the `linewidth` argument instead.
-    ## This warning is displayed once every 8 hours.
+    ## This warning is displayed once per session.
     ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.
 
 ``` r
@@ -1374,7 +1368,7 @@ ggsave(here("output", "parameter_estimates_boxplot.png"), plot = p_parameter_est
 p_parameter_estimates
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-boxplot-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-boxplot-1.png)<!-- -->
 Pairwise correlations between parameters:
 
 ``` r
@@ -1518,7 +1512,7 @@ p_pairwise_corrs
     ## Warning: No shared levels found between `names(values)` of the manual scale and
     ## the data's colour values.
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-correlations-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-correlations-1.png)<!-- -->
 
 Combine into one plot:
 
@@ -1658,7 +1652,7 @@ ggsave(here("output", "parameter_estimates_correlations.png"), plot = p_combined
 p_combined
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-combined-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/parameter-estimates-combined-1.png)<!-- -->
 
 ## Fact-level offsets
 
@@ -1688,7 +1682,7 @@ ggplot(fit_delta_phi_avg, aes(x = reorder_within(fact_id, delta_phi_mean, lesson
         panel.grid.major.x = element_blank())
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/delta-phi-by-lesson-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/delta-phi-by-lesson-1.png)<!-- -->
 
 Some facts/lessons were only encountered by a small number of
 participants:
@@ -1699,7 +1693,7 @@ ggplot(fit_delta_phi_avg, aes(x = N)) +
   labs(x = "Number of participants who encountered the fact", y = "Count")
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/num-participants-per-fact-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/num-participants-per-fact-1.png)<!-- -->
 To quantify the agreement in relative difficulty across participants, we
 can compute the intra-class correlation (ICC) of $\Delta\phi$ estimates
 across facts. However, the fact that each participant’s delta phi
@@ -1724,7 +1718,7 @@ ggplot(fit_delta_phi, aes(x = reorder_within(fact_id, fact_phi, lesson_id, mean)
         panel.grid.major.x = element_blank())
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/delta-phi-by-lesson-2-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/05_fit_model_files/figure-gfm/delta-phi-by-lesson-2-1.png)<!-- -->
 
 Then, compute ICC from a mixed-effects regression model with random
 intercepts for participants and lessons:
@@ -1735,23 +1729,23 @@ icc_delta_phi <- ICC(delta_phi_wide[, -1, with = FALSE], lmer = TRUE)
 ```
 
     ## Warning in pf(FJ, dfJ, dfE, log.p = TRUE): pbeta(*, log.p=TRUE) ->
-    ## bpser(a=21725, b=25, x=0.690568,...) underflow to -Inf
+    ## bpser(a=21725, b=25, x=0.722377,...) underflow to -Inf
 
 ``` r
 print(icc_delta_phi$results)
 ```
 
     ##                          type       ICC        F df1   df2 p lower bound
-    ## Single_raters_absolute   ICC1 0.2198842 15.37491 869 43500 0   0.2032753
-    ## Single_random_raters     ICC2 0.2235499 22.23856 869 43450 0   0.1972462
-    ## Single_fixed_raters      ICC3 0.2940059 22.23856 869 43450 0   0.2742002
-    ## Average_raters_absolute ICC1k 0.9349590 15.37491 869 43500 0   0.9286330
-    ## Average_random_raters   ICC2k 0.9362389 22.23856 869 43450 0   0.9260973
-    ## Average_fixed_raters    ICC3k 0.9550331 22.23856 869 43450 0   0.9506595
+    ## Single_raters_absolute   ICC1 0.2276406 16.03144 869 43500 0   0.2106535
+    ## Single_random_raters     ICC2 0.2308647 22.16711 869 43450 0   0.2055881
+    ## Single_fixed_raters      ICC3 0.2933069 22.16711 869 43450 0   0.2735269
+    ## Average_raters_absolute ICC1k 0.9376226 16.03144 869 43500 0   0.9315556
+    ## Average_random_raters   ICC2k 0.9386813 22.16711 869 43450 0   0.9295697
+    ## Average_fixed_raters    ICC3k 0.9548881 22.16711 869 43450 0   0.9505004
     ##                         upper bound
-    ## Single_raters_absolute    0.2381760
-    ## Single_random_raters      0.2515829
-    ## Single_fixed_raters       0.3155190
-    ## Average_raters_absolute   0.9409841
-    ## Average_random_raters     0.9448848
-    ## Average_fixed_raters      0.9591987
+    ## Single_raters_absolute    0.2463219
+    ## Single_random_raters      0.2578422
+    ## Single_fixed_raters       0.3147948
+    ## Average_raters_absolute   0.9434010
+    ## Average_random_raters     0.9465770
+    ## Average_fixed_raters      0.9590672

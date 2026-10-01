@@ -1,13 +1,13 @@
 # Idiographic Memory Modelling in ACT-R using Alternating Maximum Likelihood Estimation
 
-Code and data accompanying the paper *Idiographic Memory Modelling in ACT-R using Alternating Maximum Likelihood Estimation* (van der Velde, Wilschut, Hake, van Rijn, & Stocco).
+Code and data accompanying the paper *Idiographic Memory Modelling in ACT-R using Alternating Maximum Likelihood Estimation* (van der Velde, Wilschut, van Rijn, & Stocco).
 
 The repository contains a model walkthrough notebook and two analysis pipelines, with scripts numbered sequentially across the whole project:
 
-- **`00_model_walkthrough.Rmd`** — a self-contained introduction to the ACT-R memory model: activation function, likelihood functions for accuracy and response time, and the effect of each parameter on behaviour.
+- **`00_model_walkthrough.Rmd`** - a self-contained introduction to the ACT-R memory model: activation function, likelihood functions for accuracy and response time, and the effect of each parameter on behaviour.
 
-- **`simulation/`** (scripts 01–03) — a parameter-recovery study on synthetic data, establishing that the five participant-level ACT-R parameters and the fact-level offsets are jointly identifiable from realistic amounts of retrieval-practice data.
-- **`example-application/`** (scripts 04–06) — an application to the longitudinal clinical data of [Hake et al. (2026)](https://doi.org/10.1371/journal.pdig.0001686), fitting the model and asking which parameters distinguish mild cognitive impairment (MCI) from healthy controls (HC).
+- **`simulation/`** (scripts 01–03) - a parameter-recovery study on synthetic data, establishing that the five participant-level ACT-R parameters and the fact-level offsets are jointly identifiable from realistic amounts of retrieval-practice data.
+- **`example-application/`** (scripts 04–06) - an application to the longitudinal clinical data of [Hake et al. (2026)](https://doi.org/10.1371/journal.pdig.0001686), fitting the model and asking which parameters distinguish mild cognitive impairment (MCI) from healthy controls (HC).
 
 Both pipelines share a single implementation of the ACT-R likelihood, the simulator, and the AMLE fitting procedure, in [`R/`](./R).
 
@@ -16,6 +16,9 @@ Both pipelines share a single implementation of the ACT-R likelihood, the simula
 ```
 actr-amle/
 ├── Makefile                  One entry point for every step (see `make help`)
+├── renv.lock                 Exact R package versions used for the paper
+├── .Rprofile                 Activates the renv project library automatically
+├── renv/                     renv bootstrap files (activate.R, settings.json)
 ├── 00_model_walkthrough.Rmd  Model walkthrough notebook (activation, likelihoods, parameters)
 ├── R/                        Shared model code
 │   ├── sim-mle.R             Simulator + AMLE fitting / recovery functions
@@ -23,7 +26,7 @@ actr-amle/
 ├── data/
 │   ├── raw/                  Undistributed source data (git-ignored)
 │   └── processed/            Shipped: prepared data + cached model fits
-│       ├── hake2024.csv
+│       ├── hake2026.csv
 │       ├── AMLE_fit.csv
 │       ├── AMLE_delta_alpha.csv
 │       └── fits/             Cached `.rds` results for the expensive steps
@@ -40,6 +43,35 @@ actr-amle/
 └── output/                   All figures (named PNGs from ggsave) and rendered notebooks
     └── 00_model_walkthrough.nb.html
 ```
+
+## Setup
+
+This project uses [renv](https://rstudio.github.io/renv/) to pin the versions of all R packages (recorded in `renv.lock`). To get the same results as the paper, use the same R version and install the packages from the lockfile.
+
+**Requirements**
+
+| Requirement | Details |
+|---|---|
+| **R** | Version **`<R_VERSION>`** (the version in `renv.lock`). Easiest with [rig](https://github.com/r-lib/rig): `rig add <R_VERSION>`. |
+| **C++ toolchain** | Needed to compile `R/actr_ll.cpp` and some packages. macOS: `xcode-select --install`. Windows: [Rtools](https://cran.r-project.org/bin/windows/Rtools/) matching your R version. Linux: `g++` and build tools (e.g. `build-essential`) plus the usual system libraries (e.g. `libcurl4-openssl-dev`, `libssl-dev`, `libxml2-dev`). |
+| **pandoc** | Needed to render the notebooks. Included with RStudio; otherwise [install it](https://pandoc.org/installing.html). |
+| **make and bash** | Used by the `Makefile`. Preinstalled on macOS and most Linux systems. On Windows, run `make` from Git Bash, WSL, or the Rtools shell. |
+
+**Install the packages** (once, from the repository root):
+
+```bash
+make setup
+```
+
+This installs `renv` if needed and runs `renv::restore()`, which installs the exact package versions from `renv.lock` into a project-local library. It does not touch your global R library. Because of `.Rprofile`, the project library is activated automatically whenever R is started from the repository root (including by `make` and by opening `actr-amle.Rproj` in RStudio).
+
+Check that your environment matches the lockfile at any time with:
+
+```bash
+make env-status
+```
+
+**Tested on:** `macOS 27.0`, R `4.4.3`. The analyses should reproduce on macOS, Windows and Linux; results may differ from the paper at the level of numerical precision across platforms.
 
 ## Reproducing the analyses
 
@@ -69,7 +101,7 @@ make classify          # 06: parameter contributions to MCI vs HC classification
 Rebuilding the processed data from scratch requires the raw file (see below):
 
 ```bash
-make data              # 04: data/raw/hake2024.Rdata -> data/processed/hake2024.csv
+make data              # 04: data/raw/hake2026.Rdata -> data/processed/hake2026.csv
 ```
 
 Run everything end to end with `make all`.
@@ -90,16 +122,20 @@ Only `05_fit_model.md` is shipped pre-rendered; the others appear once you run `
 
 The processed retrieval-practice data and the cached model fits needed to reproduce the figures are included under [`data/processed/`](./data/processed).
 
-The **raw** source data (`data/raw/hake2024.Rdata`) from Hake et al. (2026) is not distributed with this repository and is excluded via `.gitignore`. To regenerate the processed data, place that file in `data/raw/` and run `make data`.
+The **raw** source data (`data/raw/hake2026.Rdata`) from Hake et al. (2026) is not distributed with this repository and is excluded via `.gitignore`. To regenerate the processed data, place that file in `data/raw/` and run `make data`.
 
 ## Notes
 
-- All scripts resolve paths through `here::here()`, anchored at the repository root (`actr-amle.Rproj`/`.here`), so they can be run or knit from any working directory.
-- The expensive fitting steps (greedy selection, recovery grids, classification) are guarded by `eval = FALSE` chunks and read cached results from `data/processed/fits/`. Use `make clean-cache` to force a full refit (slow).
+- All scripts resolve paths through `here::here()`, anchored at the repository root (`actr-amle.Rproj`/`.here`), so they can be run or knit from any working directory. The package environment, however, is activated through `.Rprofile`, so start R (or run `make`) from the repository root, or open the `.Rproj` file in RStudio.
+- The expensive fitting steps (greedy selection, recovery grids, classification) are guarded by `eval = FALSE` chunks and read cached results from `data/processed/fits/`. These cached results were produced with the package versions in `renv.lock`. Use `make clean-cache` to force a full refit (slow).
+- If you add or update a package, run `make env-snapshot` and commit the new `renv.lock`.
 
 ## Citation
 
-If you use this code, please cite the accompanying paper.
+If you use this code, please cite the accompanying paper:
+
+van der Velde, M., Wilschut, T., van Rijn, H., & Stocco, A. (2026). Idiographic Memory Modelling in ACT-R Using Alternating Maximum
+Likelihood Estimation. Open Mind: Discoveries in Cognitive Science. Advance publication. [https://doi.org/10.1162/OPMI.a.396](https://doi.org/10.1162/OPMI.a.396)
 
 ## Conflict of interest
 

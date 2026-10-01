@@ -1,7 +1,7 @@
 Simulation: parameter recovery as a function of available data
 ================
 Thomas Wilschut
-Last updated: 2026-09-02
+Last updated: 2026-10-01
 
 - [Setup](#setup)
 - [Simulate a larger dataset for
@@ -383,7 +383,7 @@ combined <-
 combined
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/03_parameter_recovery_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/03_parameter_recovery_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 # Paper Figure 5: recovery of participant-level parameters as a function of available data
@@ -472,7 +472,7 @@ p_fact_error <- ggplot(fact_error, aes(x = factor(n_repetitions), y = mean_error
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/03_parameter_recovery_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/03_parameter_recovery_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 # Paper Figure 6: recovery of fact-level Speed of Forgetting offsets (delta-phi)
@@ -516,7 +516,7 @@ pairs_true
     ## `geom_smooth()` using formula = 'y ~ x'
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/03_parameter_recovery_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/03_parameter_recovery_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 \# Stepwise decomposition of recovery figures (for slides)
 
 Export panels A (recovery vs. repetitions) and C (recovery vs. facts) in
@@ -641,13 +641,13 @@ for (i in seq_along(param_seq)) {
 sessionInfo()
 ```
 
-    ## R version 4.5.1 (2025-06-13)
+    ## R version 4.4.3 (2025-02-28)
     ## Platform: aarch64-apple-darwin20
-    ## Running under: macOS Sequoia 15.2
+    ## Running under: macOS 27.0
     ## 
     ## Matrix products: default
-    ## BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
-    ## LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+    ## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRblas.0.dylib 
+    ## LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
     ## 
     ## locale:
     ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -656,26 +656,26 @@ sessionInfo()
     ## tzcode source: internal
     ## 
     ## attached base packages:
-    ## [1] stats     graphics  grDevices utils     datasets  methods   base     
+    ## [1] stats     graphics  grDevices datasets  utils     methods   base     
     ## 
     ## other attached packages:
-    ##  [1] lubridate_1.9.4   forcats_1.0.1     stringr_1.5.2     dplyr_1.1.4      
-    ##  [5] purrr_1.1.0       readr_2.1.5       tidyr_1.3.1       tibble_3.3.0     
-    ##  [9] tidyverse_2.0.0   GGally_2.4.0      Rcpp_1.1.1-1.1    ggsci_4.0.0      
-    ## [13] patchwork_1.3.2   furrr_0.3.1       future_1.67.0     ggplot2_4.0.0    
-    ## [17] here_1.0.2        data.table_1.17.8
+    ##  [1] lubridate_1.9.4   forcats_1.0.0     stringr_1.5.1     dplyr_1.2.0      
+    ##  [5] purrr_1.0.4       readr_2.1.5       tidyr_1.3.1       tibble_3.2.1     
+    ##  [9] tidyverse_2.0.0   GGally_2.4.0      Rcpp_1.1.1        ggsci_3.2.0      
+    ## [13] patchwork_1.3.2   furrr_0.3.1       future_1.34.0     ggplot2_4.0.2    
+    ## [17] here_1.0.1        data.table_1.17.0
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      listenv_0.9.1     
-    ##  [5] hms_1.1.3          digest_0.6.37      magrittr_2.0.4     timechange_0.3.0  
-    ##  [9] evaluate_1.0.5     grid_4.5.1         RColorBrewer_1.1-3 fastmap_1.2.0     
-    ## [13] Matrix_1.7-3       rprojroot_2.1.1    mgcv_1.9-3         scales_1.4.0      
-    ## [17] textshaping_1.0.4  codetools_0.2-20   cli_3.6.5          rlang_1.1.6       
-    ## [21] parallelly_1.45.1  splines_4.5.1      withr_3.0.2        yaml_2.3.10       
-    ## [25] tools_4.5.1        parallel_4.5.1     tzdb_0.5.0         globals_0.18.0    
-    ## [29] ggstats_0.11.0     vctrs_0.6.5        R6_2.6.1           lifecycle_1.0.4   
-    ## [33] ragg_1.5.0         pkgconfig_2.0.3    pillar_1.11.1      gtable_0.3.6      
-    ## [37] glue_1.8.0         systemfonts_1.3.1  xfun_0.53          tidyselect_1.2.1  
-    ## [41] rstudioapi_0.17.1  knitr_1.50         farver_2.1.2       nlme_3.1-168      
-    ## [45] htmltools_0.5.8.1  svglite_2.2.1      labeling_0.4.3     rmarkdown_2.30    
-    ## [49] compiler_4.5.1     S7_0.2.0
+    ##  [1] generics_0.1.3     renv_1.1.8         lattice_0.22-6     stringi_1.8.7     
+    ##  [5] listenv_0.9.1      hms_1.1.3          digest_0.6.37      magrittr_2.0.3    
+    ##  [9] timechange_0.3.0   evaluate_1.0.3     grid_4.4.3         RColorBrewer_1.1-3
+    ## [13] fastmap_1.2.0      Matrix_1.7-3       rprojroot_2.0.4    mgcv_1.9-1        
+    ## [17] scales_1.4.0       textshaping_1.0.0  codetools_0.2-20   cli_3.6.5         
+    ## [21] rlang_1.1.7        parallelly_1.43.0  splines_4.4.3      withr_3.0.2       
+    ## [25] yaml_2.3.10        tools_4.4.3        parallel_4.4.3     tzdb_0.5.0        
+    ## [29] globals_0.16.3     ggstats_0.9.0      vctrs_0.7.2        R6_2.6.1          
+    ## [33] lifecycle_1.0.5    ragg_1.3.3         pkgconfig_2.0.3    pillar_1.10.1     
+    ## [37] gtable_0.3.6       glue_1.8.0         systemfonts_1.3.2  xfun_0.51         
+    ## [41] tidyselect_1.2.1   rstudioapi_0.17.1  knitr_1.50         farver_2.1.2      
+    ## [45] nlme_3.1-168       htmltools_0.5.8.1  svglite_2.2.2      labeling_0.4.3    
+    ## [49] rmarkdown_2.29     compiler_4.4.3     S7_0.2.1

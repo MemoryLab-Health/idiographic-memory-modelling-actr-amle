@@ -17,7 +17,7 @@ library(forcats)
 
 # Load data ---------------------------------------------------------------
 
-load(here("data", "raw", "hake2024.Rdata"))
+load(here("data", "raw", "hake2026.Rdata"))
 
 
 # Format data -------------------------------------------------------------
@@ -42,4 +42,4 @@ d[, session := .GRP, by = .(user_id, session_id)]
 
 # Save data ---------------------------------------------------------------
 
-fwrite(d, here("data", "processed", "hake2024.csv"))
+fwrite(d, here("data", "processed", "hake2026.csv"))

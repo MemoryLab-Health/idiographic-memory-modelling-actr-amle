@@ -1,7 +1,7 @@
 Simulation: generating synthetic retrieval-practice data
 ================
 Thomas Wilschut
-Last updated: 2026-09-02
+Last updated: 2026-10-01
 
 - [Setup](#setup)
 - [Simulate data](#simulate-data)
@@ -228,7 +228,7 @@ distr / acc / rt_plot +
     ## `geom_smooth()` using formula = 'y ~ x'
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 ``` r
 # Paper Figure 2: parameter distributions and their relation to behaviour
@@ -309,7 +309,7 @@ rt_ex_ter_plot
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 ``` r
 # Supplementary figure: parameter effects on RT after accounting for non-retrieval time
@@ -401,7 +401,7 @@ p_sigmoid <- ggplot() +
 p_calib + p_sigmoid
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 The left panel is a calibration plot: if the simulation is internally
 consistent, the binned points should fall close to the diagonal. The
@@ -439,7 +439,7 @@ p_rt_rep <- ggplot(learn_curve, aes(x = rep, y = median_rt)) +
 p_acc_rep + p_rt_rep
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 Accuracy should increase and RT should decrease over repetitions,
 reflecting the strengthening of memory traces through practice. The IQR
@@ -471,7 +471,7 @@ p_da_acc + p_da_rt
     ## `geom_smooth()` using formula = 'y ~ x'
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 Higher fact offsets (Δφ) make a fact harder to retain, so accuracy
 should decrease and RT should increase with larger offsets. Each dot is
@@ -493,7 +493,7 @@ ggplot(sim_test, aes(x = rt, fill = correct)) +
   theme(legend.position = c(0.85, 0.85))
 ```
 
-![](/Users/thomaswilschut/Documents/GitHub/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](/Users/maarten/Documents/projects/PCL/amle-gh/idiographic-memory-modelling-actr-amle/output/01_simulate_data_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 Correct responses should be faster than incorrect ones, consistent with
 the model’s assumption that higher activation produces both faster and
@@ -506,13 +506,13 @@ with the incorrect-response distribution shifted towards longer RTs.
 sessionInfo()
 ```
 
-    ## R version 4.5.1 (2025-06-13)
+    ## R version 4.4.3 (2025-02-28)
     ## Platform: aarch64-apple-darwin20
-    ## Running under: macOS Sequoia 15.2
+    ## Running under: macOS 27.0
     ## 
     ## Matrix products: default
-    ## BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
-    ## LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+    ## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRblas.0.dylib 
+    ## LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
     ## 
     ## locale:
     ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -521,35 +521,35 @@ sessionInfo()
     ## tzcode source: internal
     ## 
     ## attached base packages:
-    ## [1] stats     graphics  grDevices utils     datasets  methods   base     
+    ## [1] stats     graphics  grDevices datasets  utils     methods   base     
     ## 
     ## other attached packages:
-    ##  [1] Rcpp_1.1.1-1.1    ggsci_4.0.0       dplyr_1.1.4       lmerTest_3.1-3   
-    ##  [5] lme4_2.0-1        Matrix_1.7-3      ggExtra_0.11.0    patchwork_1.3.2  
-    ##  [9] jsonlite_2.0.0    tidyr_1.3.1       progressr_0.17.0  furrr_0.3.1      
-    ## [13] future_1.67.0     purrr_1.1.0       ggplot2_4.0.0     janitor_2.2.1    
-    ## [17] data.table_1.17.8 here_1.0.2       
+    ##  [1] Rcpp_1.1.1        ggsci_3.2.0       dplyr_1.2.0       lmerTest_3.1-3   
+    ##  [5] lme4_1.1-37       Matrix_1.7-3      ggExtra_0.11.0    patchwork_1.3.2  
+    ##  [9] jsonlite_2.0.0    tidyr_1.3.1       progressr_0.15.1  furrr_0.3.1      
+    ## [13] future_1.34.0     purrr_1.0.4       ggplot2_4.0.2     janitor_2.2.1    
+    ## [17] data.table_1.17.0 here_1.0.1       
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] gtable_0.3.6        xfun_0.53           lattice_0.22-7     
-    ##  [4] numDeriv_2016.8-1.1 vctrs_0.6.5         tools_4.5.1        
-    ##  [7] Rdpack_2.6.4        generics_0.1.4      parallel_4.5.1     
-    ## [10] tibble_3.3.0        pkgconfig_2.0.3     RColorBrewer_1.1-3 
-    ## [13] S7_0.2.0            lifecycle_1.0.4     compiler_4.5.1     
-    ## [16] farver_2.1.2        stringr_1.5.2       textshaping_1.0.4  
-    ## [19] codetools_0.2-20    snakecase_0.11.1    httpuv_1.6.16      
+    ##  [1] gtable_0.3.6        xfun_0.51           lattice_0.22-6     
+    ##  [4] numDeriv_2016.8-1.1 Rdpack_2.6.3        vctrs_0.7.2        
+    ##  [7] tools_4.4.3         generics_0.1.3      parallel_4.4.3     
+    ## [10] tibble_3.2.1        pkgconfig_2.0.3     RColorBrewer_1.1-3 
+    ## [13] S7_0.2.1            lifecycle_1.0.5     compiler_4.4.3     
+    ## [16] farver_2.1.2        stringr_1.5.1       textshaping_1.0.0  
+    ## [19] codetools_0.2-20    snakecase_0.11.1    httpuv_1.6.15      
     ## [22] htmltools_0.5.8.1   yaml_2.3.10         nloptr_2.2.1       
-    ## [25] pillar_1.11.1       later_1.4.4         MASS_7.3-65        
-    ## [28] reformulas_0.4.4    boot_1.3-32         nlme_3.1-168       
-    ## [31] mime_0.13           parallelly_1.45.1   tidyselect_1.2.1   
+    ## [25] pillar_1.10.1       later_1.4.1         MASS_7.3-65        
+    ## [28] reformulas_0.4.0    boot_1.3-31         nlme_3.1-168       
+    ## [31] mime_0.13           parallelly_1.43.0   tidyselect_1.2.1   
     ## [34] digest_0.6.37       stringi_1.8.7       listenv_0.9.1      
-    ## [37] labeling_0.4.3      splines_4.5.1       rprojroot_2.1.1    
-    ## [40] fastmap_1.2.0       grid_4.5.1          cli_3.6.5          
-    ## [43] magrittr_2.0.4      withr_3.0.2         scales_1.4.0       
-    ## [46] promises_1.4.0      lubridate_1.9.4     timechange_0.3.0   
-    ## [49] rmarkdown_2.30      globals_0.18.0      otel_0.2.0         
-    ## [52] ragg_1.5.0          shiny_1.11.1        evaluate_1.0.5     
-    ## [55] knitr_1.50          rbibutils_2.3       miniUI_0.1.2       
-    ## [58] mgcv_1.9-3          rlang_1.1.6         xtable_1.8-4       
-    ## [61] glue_1.8.0          minqa_1.2.8         rstudioapi_0.17.1  
-    ## [64] R6_2.6.1            systemfonts_1.3.1
+    ## [37] labeling_0.4.3      splines_4.4.3       rprojroot_2.0.4    
+    ## [40] fastmap_1.2.0       grid_4.4.3          cli_3.6.5          
+    ## [43] magrittr_2.0.3      withr_3.0.2         scales_1.4.0       
+    ## [46] promises_1.3.2      lubridate_1.9.4     timechange_0.3.0   
+    ## [49] rmarkdown_2.29      globals_0.16.3      ragg_1.3.3         
+    ## [52] shiny_1.10.0        evaluate_1.0.3      knitr_1.50         
+    ## [55] rbibutils_2.3       miniUI_0.1.1.1      mgcv_1.9-1         
+    ## [58] rlang_1.1.7         xtable_1.8-4        glue_1.8.0         
+    ## [61] renv_1.1.8          rstudioapi_0.17.1   minqa_1.2.8        
+    ## [64] R6_2.6.1            systemfonts_1.3.2

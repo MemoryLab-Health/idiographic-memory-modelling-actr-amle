@@ -12,6 +12,10 @@
 #  `make classify` run out of the box. Only `make data` needs the raw source
 #  file (see data/raw/.gitkeep).
 #
+#  First time? Run `make setup` once to install the exact R package versions
+#  recorded in renv.lock (renv activates automatically via .Rprofile when R is
+#  started from the repository root, which is where make runs).
+#
 #  Run `make help` for an overview of all targets.
 # ============================================================================
 
@@ -32,14 +36,30 @@ RENDER   = $(R) -e "rmarkdown::render('$(1)', output_format = 'github_document',
 SIM_DIR := simulation/scripts
 APP_DIR := example-application/scripts
 
-RAW     := data/raw/hake2024.Rdata
-PROC    := data/processed/hake2024.csv
+RAW     := data/raw/hake2026.Rdata
+PROC    := data/processed/hake2026.csv
 FIT     := data/processed/AMLE_fit.csv
 
-.PHONY: all simulation application \
+.PHONY: all setup env-status env-snapshot simulation application \
         sim-data sim-greedy sim-recovery data fit classify \
-        walkthrough stepwise help clean clean-cache
+        walkthrough help clean clean-cache
 .DEFAULT_GOAL := help
+
+# ---------------------------------------------------------------------------
+# Environment (renv): run `make setup` once after cloning
+# ---------------------------------------------------------------------------
+
+## setup        : install the exact R packages recorded in renv.lock (run once)
+setup:
+	$(R) -e "if (!requireNamespace('renv', quietly = TRUE)) install.packages('renv', repos = 'https://cloud.r-project.org'); renv::restore(prompt = FALSE)"
+
+## env-status   : check whether installed packages match renv.lock
+env-status:
+	$(R) -e "renv::status()"
+
+## env-snapshot : (maintainers) record current package versions in renv.lock
+env-snapshot:
+	$(R) -e "renv::snapshot()"
 
 ## all          : run both pipelines end to end (including walkthrough)
 all: walkthrough simulation application
@@ -47,10 +67,6 @@ all: walkthrough simulation application
 ## walkthrough  : 00 model walkthrough notebook (renders to output/)
 walkthrough:
 	$(call RENDER,00_model_walkthrough.Rmd)
-
-## stepwise     : 000 stepwise parameter plots for presentations (PNGs -> output/stepwise/)
-stepwise:
-	$(call RENDER,000_stepwise_model_plots.Rmd)
 
 # ---------------------------------------------------------------------------
 # Simulation pipeline (synthetic data; self-contained, no raw data needed)
@@ -78,7 +94,7 @@ sim-recovery:
 ## application  : run the full application pipeline (04 -> 05 -> 06)
 application: data fit classify
 
-## data         : 04 (re)build processed data from raw (needs data/raw/hake2024.Rdata)
+## data         : 04 (re)build processed data from raw (needs data/raw/hake2026.Rdata)
 data:
 	@if test -f $(RAW); then \
 	  $(R) $(APP_DIR)/04_prepare_data.R; \

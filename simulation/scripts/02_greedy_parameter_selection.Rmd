@@ -26,6 +26,7 @@ library(ggsci)
 library(Rcpp)
 library(ggh4x)
 library(tidyverse)
+library(svglite)
 
 # Parallel backend
 plan(multisession, workers = availableCores() - 1)
